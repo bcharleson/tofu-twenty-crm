@@ -15,7 +15,8 @@ const StyledLink = styled.a`
   background-color: ${themeCssVariables.background.transparent.lighter};
   border: 1px solid ${themeCssVariables.border.color.strong};
   border-radius: 50px;
-  box-sizing: border-box;
+  /* Height and max-width are sized against the content box. */
+  box-sizing: content-box;
   color: ${themeCssVariables.font.color.primary};
   cursor: pointer;
   display: inline-flex;
