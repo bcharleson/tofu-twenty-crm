@@ -186,6 +186,18 @@ client droplet        ← docker compose pull && up; workspace logo unchanged in
 
 On every upstream merge: walk the Active Core Patches table. If a patched file conflicts, re-apply our intent (see re-apply steps above). Client logos in the database are unaffected by image upgrades.
 
+## GitHub Actions on the fork
+
+Upstream ships dozens of workflows. Only a few are TOFU-owned; the rest are Twenty infra and will **fail or spam email** on `bcharleson/tofu-twenty-crm` unless gated.
+
+| Tier | Examples | Fork policy |
+|---|---|---|
+| **TOFU-owned** | `tofu-docker-publish.yaml`, `tofu-upstream-sync.yaml` | Always run on our fork |
+| **Upstream CI** | `ci-server.yaml`, `ci-front.yaml`, `ci-ui.yaml` | Optional signal on merge — useful but heavy |
+| **Upstream infra dispatch** | `visual-regression-dispatch.yaml`, `cd-deploy-main.yaml`, `preview-env-dispatch.yaml`, i18n bots | Gate with `if: github.repository == 'twentyhq/twenty'` — they call `twentyhq/ci-privileged` or `twenty-infra` with secrets we do not have |
+
+After every upstream merge, scan `.github/workflows/` for new dispatch workflows that reference `CI_PRIVILEGED_DISPATCH_TOKEN` or `TWENTY_INFRA_TOKEN` and add the same repository guard if missing.
+
 ## Pinning to a Specific Upstream Version (for client deployments)
 
 Instead of always running `latest`, pin client deployments to a tagged release:
