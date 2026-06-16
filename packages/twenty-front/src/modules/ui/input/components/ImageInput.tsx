@@ -2,7 +2,7 @@ import { styled } from '@linaria/react';
 import { Trans, useLingui } from '@lingui/react/macro';
 
 import { isNonEmptyString } from '@sniptt/guards';
-import React, { useContext, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { getImageAbsoluteURI, isDefined } from 'twenty-shared/utils';
 import {
   IconPhotoUp,
@@ -126,6 +126,10 @@ export const ImageInput = ({
         baseUrl: REACT_APP_SERVER_BASE_URL,
       })
     : null;
+
+  useEffect(() => {
+    setIsPictureURLError(false);
+  }, [pictureURI]);
 
   return (
     <StyledContainer className={className}>
