@@ -1,9 +1,9 @@
 import { currentWorkspaceState } from '@/auth/states/currentWorkspaceState';
 import { workspacePublicDataState } from '@/auth/states/workspacePublicDataState';
+import { Helmet } from '@dr.pogodin/react-helmet';
 import { useAtomStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomStateValue';
 import { isNonEmptyString } from '@sniptt/guards';
 import { useEffect } from 'react';
-import { Helmet } from 'react-helmet-async';
 import { isDefined } from 'twenty-shared/utils';
 import { REACT_APP_SERVER_BASE_URL } from '~/config';
 
@@ -79,9 +79,7 @@ export const PageFavicon = () => {
     DEFAULT_PWA_NAME;
 
   const hasWorkspaceLogo = isNonEmptyString(workspaceLogo);
-  const faviconUrl = hasWorkspaceLogo
-    ? workspaceLogo
-    : getServerFaviconUrl();
+  const faviconUrl = hasWorkspaceLogo ? workspaceLogo : getServerFaviconUrl();
 
   const pwaDisplayName = isNonEmptyString(workspaceDisplayName)
     ? workspaceDisplayName
