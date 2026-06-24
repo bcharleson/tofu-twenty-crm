@@ -3,7 +3,7 @@ import { Trans } from '@lingui/react/macro';
 
 import { useWorkspaceBypass } from '@/auth/sign-in-up/hooks/useWorkspaceBypass';
 import { useIsCurrentLocationOnAWorkspace } from '@/domain-manager/hooks/useIsCurrentLocationOnAWorkspace';
-import { themeCssVariables } from 'twenty-ui-deprecated/theme-constants';
+import { themeCssVariables } from 'twenty-ui/theme-constants';
 
 const StyledLinksContainer = styled.div`
   align-items: center;
@@ -33,7 +33,13 @@ const StyledLinksContainer = styled.div`
   }
 `;
 
-export const FooterNote = () => {
+type FooterNoteProps = {
+  secondaryAgreement?: 'privacyPolicy' | 'dataProcessingAgreement';
+};
+
+export const FooterNote = ({
+  secondaryAgreement: _secondaryAgreement = 'privacyPolicy',
+}: FooterNoteProps) => {
   const { isOnAWorkspace } = useIsCurrentLocationOnAWorkspace();
 
   const { shouldOfferBypass, shouldUseBypass, enableBypass } =

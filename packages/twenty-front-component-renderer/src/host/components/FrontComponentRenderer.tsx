@@ -14,7 +14,7 @@ import {
 import { useMemo, useState } from 'react';
 import { isDefined } from 'twenty-shared/utils';
 
-import { ThemeProvider } from 'twenty-ui-deprecated/theme-constants';
+import { ThemeProvider } from 'twenty-ui/theme-constants';
 import { FrontComponentWorkerEffect } from '../../remote/components/FrontComponentWorkerEffect';
 import { componentRegistry } from '../generated/host-component-registry';
 
@@ -22,6 +22,7 @@ type FrontComponentContentProps = {
   componentUrl: string;
   applicationAccessToken?: string;
   apiUrl?: string;
+  functionsBaseUrl?: string;
   sdkClientUrls?: SdkClientUrls;
   applicationVariables?: Record<string, string>;
   executionContext: FrontComponentExecutionContext;
@@ -34,6 +35,7 @@ export const FrontComponentRenderer = ({
   componentUrl,
   applicationAccessToken,
   apiUrl,
+  functionsBaseUrl,
   sdkClientUrls,
   applicationVariables,
   executionContext,
@@ -56,6 +58,7 @@ export const FrontComponentRenderer = ({
         componentUrl={componentUrl}
         applicationAccessToken={applicationAccessToken}
         apiUrl={apiUrl}
+        functionsBaseUrl={functionsBaseUrl}
         sdkClientUrls={sdkClientUrls}
         applicationVariables={applicationVariables}
         frontComponentId={executionContext.frontComponentId}
@@ -71,6 +74,7 @@ export const FrontComponentRenderer = ({
     setThread,
     applicationAccessToken,
     apiUrl,
+    functionsBaseUrl,
     sdkClientUrls,
     applicationVariables,
     executionContext.frontComponentId,

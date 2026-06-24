@@ -1,11 +1,13 @@
 import { useDeleteOneFieldMetadataItem } from '@/object-metadata/hooks/useDeleteOneFieldMetadataItem';
 import { useFieldMetadataItem } from '@/object-metadata/hooks/useFieldMetadataItem';
+import { useGetIsMetadataItemCustom } from '@/object-metadata/hooks/useGetIsMetadataItemCustom';
 import { useGetRelationMetadata } from '@/object-metadata/hooks/useGetRelationMetadata';
 import { type FieldMetadataItem } from '@/object-metadata/types/FieldMetadataItem';
 import { type EnrichedObjectMetadataItem } from '@/object-metadata/types/EnrichedObjectMetadataItem';
 import { isDDLLockedState } from '@/client-config/states/isDDLLockedState';
 import { isObjectMetadataReadOnly } from '@/object-record/read-only/utils/isObjectMetadataReadOnly';
 import { SettingsItemTypeTag } from '@/settings/components/SettingsItemTypeTag';
+import { SettingsNameCellSecondaryLabel } from '@/settings/components/SettingsNameCellSecondaryLabel';
 import { RELATION_TYPES } from '@/settings/data-model/constants/RelationTypes';
 import { SettingsObjectFieldInactiveActionDropdown } from '@/settings/data-model/object-details/components/SettingsObjectFieldDisabledActionDropdown';
 import { TableCell } from '@/ui/layout/table/components/TableCell';
@@ -17,12 +19,13 @@ import { useContext, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { FieldMetadataType, SettingsPath } from 'twenty-shared/types';
 import { getSettingsPath, isDefined } from 'twenty-shared/utils';
-import { IconChevronRight, useIcons } from 'twenty-ui-deprecated/display';
-import { UndecoratedLink } from 'twenty-ui-deprecated/navigation';
 import {
-  ThemeContext,
-  themeCssVariables,
-} from 'twenty-ui-deprecated/theme-constants';
+  IconChevronRight,
+  IconRelationManyToMany,
+  useIcons,
+} from 'twenty-ui/icon';
+import { UndecoratedLink } from 'twenty-ui/navigation';
+import { ThemeContext, themeCssVariables } from 'twenty-ui/theme-constants';
 import { useNavigateSettings } from '~/hooks/useNavigateSettings';
 
 type SettingsObjectRelationItemTableRowProps = {
@@ -45,21 +48,6 @@ const StyledNameLabel = styled.div`
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-`;
-
-const StyledInactiveLabel = styled.span`
-  color: ${themeCssVariables.font.color.extraLight};
-  flex: 0 999 auto;
-  font-size: ${themeCssVariables.font.size.sm};
-  min-width: 48px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-
-  &::before {
-    content: '·';
-    margin-right: ${themeCssVariables.spacing[1]};
-  }
 `;
 
 const StyledIconChevronRightContainer = styled.span`
@@ -105,6 +93,8 @@ export const SettingsObjectRelationItemTableRow = ({
   const navigate = useNavigateSettings();
   const { getIcon } = useIcons();
 
+  const getIsMetadataItemCustom = useGetIsMetadataItemCustom();
+
   const Icon = getIcon(fieldMetadataItem.icon);
 
   const getRelationMetadata = useGetRelationMetadata();
@@ -136,30 +126,46 @@ export const SettingsObjectRelationItemTableRow = ({
       fieldName: fieldMetadataItem.name,
     });
 
-  const isRelatedObjectLinkable =
-    isDefined(relationObjectMetadataItem?.namePlural) &&
-    !relationObjectMetadataItem.isSystem;
+  const isRelatedObjectLinkable = isDefined(
+    relationObjectMetadataItem?.namePlural,
+  );
 
-  const morphRelationCount = fieldMetadataItem.morphRelations?.length;
+  const isMorphRelation =
+    fieldMetadataItem.type === FieldMetadataType.MORPH_RELATION;
+
+  const morphRelationCount = fieldMetadataItem.morphRelations?.length ?? 0;
+  const morphRelationTargetLabel =
+    morphRelationCount === 1 ? t`1 Object` : t`${morphRelationCount} Objects`;
+  const morphRelationFieldLabel = fieldMetadataItem.label;
+  const displayRelationType = isMorphRelation
+    ? fieldMetadataItem.morphRelations?.[0]?.type
+    : relationType;
 
   const relationTypeLabel = (() => {
-    if (fieldMetadataItem.type === FieldMetadataType.MORPH_RELATION) {
-      return t`${morphRelationCount} Objects`;
-    }
-    if (isDefined(relationType) === true) {
-      return RELATION_TYPES[relationType].label;
+    if (isDefined(displayRelationType) === true) {
+      return RELATION_TYPES[displayRelationType].label;
     }
     return '';
   })();
 
-  const RelationIcon = relationType
-    ? RELATION_TYPES[relationType].Icon
+  const RelationIcon = displayRelationType
+    ? RELATION_TYPES[displayRelationType].Icon
     : undefined;
 
-  const targetObjectLabel =
-    isRelatedObjectLinkable && isDefined(relationObjectMetadataItem)
+  const NameIcon = isMorphRelation ? IconRelationManyToMany : Icon;
+
+  const targetObjectLabel = isMorphRelation
+    ? morphRelationTargetLabel
+    : isRelatedObjectLinkable && isDefined(relationObjectMetadataItem)
       ? relationObjectMetadataItem.labelPlural
       : fieldMetadataItem.label;
+
+  const fieldLabelSubtitle = isMorphRelation
+    ? morphRelationFieldLabel
+    : fieldMetadataItem.label;
+
+  const shouldDisplayFieldLabelAsSubtitle =
+    isMorphRelation || isDefined(relationObjectMetadataItem);
 
   return (
     <TableRow
@@ -174,8 +180,8 @@ export const SettingsObjectRelationItemTableRow = ({
         color={themeCssVariables.font.color.primary}
         gap={themeCssVariables.spacing[2]}
       >
-        {isDefined(Icon) && (
-          <Icon
+        {isDefined(NameIcon) && (
+          <NameIcon
             style={{
               minWidth: theme.icon.size.md,
             }}
@@ -201,8 +207,15 @@ export const SettingsObjectRelationItemTableRow = ({
               {targetObjectLabel}
             </StyledNameLabel>
           )}
+          {shouldDisplayFieldLabelAsSubtitle && (
+            <SettingsNameCellSecondaryLabel title={fieldLabelSubtitle}>
+              {fieldLabelSubtitle}
+            </SettingsNameCellSecondaryLabel>
+          )}
           {!fieldMetadataItem.isActive && (
-            <StyledInactiveLabel>{t`Deactivated`}</StyledInactiveLabel>
+            <SettingsNameCellSecondaryLabel>
+              {t`Deactivated`}
+            </SettingsNameCellSecondaryLabel>
           )}
         </StyledNameContainer>
       </TableCell>
@@ -210,7 +223,6 @@ export const SettingsObjectRelationItemTableRow = ({
       <TableCell>
         <SettingsItemTypeTag
           item={{
-            isCustom: fieldMetadataItem.isCustom ?? undefined,
             isRemote: objectMetadataItem.isRemote,
             applicationId: fieldMetadataItem.applicationId,
           }}
@@ -251,7 +263,7 @@ export const SettingsObjectRelationItemTableRow = ({
           </UndecoratedLink>
         ) : (
           <SettingsObjectFieldInactiveActionDropdown
-            isCustomField={fieldMetadataItem.isCustom === true}
+            isCustomField={getIsMetadataItemCustom(fieldMetadataItem)}
             readonly={readonly}
             fieldMetadataItemId={fieldMetadataItem.id}
             onEdit={navigateToFieldEdit}

@@ -165,6 +165,9 @@ export class Billing {
   @Field(() => String, { nullable: true })
   billingUrl?: string;
 
+  @Field(() => String, { nullable: true })
+  stripePublishableKey?: string;
+
   @Field(() => [BillingTrialPeriodDTO])
   trialPeriods: BillingTrialPeriodDTO[];
 }
@@ -266,6 +269,9 @@ export class ClientConfig {
 
   @Field(() => String)
   frontDomain: string;
+
+  @Field(() => String, { nullable: true })
+  publicFunctionDomain: string | null;
 
   @Field(() => Boolean)
   analyticsEnabled: boolean;

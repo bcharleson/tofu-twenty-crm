@@ -45,7 +45,13 @@ export class RouteTriggerRestApiExceptionFilter implements ExceptionFilter {
           response,
           429,
         );
-      case RouteTriggerExceptionCode.LOGIC_FUNCTION_EXECUTION_ERROR:
+      case RouteTriggerExceptionCode.LEGACY_ROUTE_DEPRECATED:
+        return this.httpExceptionHandlerService.handleError(
+          exception as CustomException,
+          response,
+          410,
+        );
+      case RouteTriggerExceptionCode.ROUTE_TRIGGER_USER_UNCAUGHT_ERROR:
         return this.httpExceptionHandlerService.handleError(
           exception as CustomException,
           response,
@@ -53,6 +59,12 @@ export class RouteTriggerRestApiExceptionFilter implements ExceptionFilter {
           undefined,
           undefined,
           { shouldBeCapturedBySentry: false },
+        );
+      case RouteTriggerExceptionCode.ROUTE_TRIGGER_PLATFORM_ERROR:
+        return this.httpExceptionHandlerService.handleError(
+          exception as CustomException,
+          response,
+          500,
         );
       case RouteTriggerExceptionCode.ROUTE_ALREADY_EXIST:
       case RouteTriggerExceptionCode.ROUTE_PATH_ALREADY_EXIST:

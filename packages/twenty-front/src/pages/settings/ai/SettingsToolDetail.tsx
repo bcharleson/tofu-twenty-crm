@@ -18,11 +18,12 @@ import { SettingsPageLayout } from '@/settings/components/layout/SettingsPageLay
 import { useAtomStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomStateValue';
 import { SettingsPath } from 'twenty-shared/types';
 import { getSettingsPath, isDefined, isValidUuid } from 'twenty-shared/utils';
-import { H2Title, IconTrash } from 'twenty-ui-deprecated/display';
-import { Button } from 'twenty-ui-deprecated/input';
-import { Section } from 'twenty-ui-deprecated/layout';
+import { IconTrash } from 'twenty-ui/icon';
+import { H2Title } from 'twenty-ui/typography';
+import { Button } from 'twenty-ui/input';
+import { Section } from 'twenty-ui/layout';
 
-import { ThemeContext } from 'twenty-ui-deprecated/theme-constants';
+import { ThemeContext } from 'twenty-ui/theme-constants';
 import { useDebouncedCallback } from 'use-debounce';
 import {
   GetToolIndexDocument,
@@ -86,7 +87,9 @@ export const SettingsToolDetail = () => {
 
   const isReadOnly = !isCustomTool || isManaged;
 
-  const name = isCustomTool ? logicFunction?.name : toolIdentifier;
+  const displayName = isCustomTool
+    ? logicFunction?.name
+    : (systemTool?.label ?? toolIdentifier);
   const description = isCustomTool
     ? logicFunction?.description
     : systemTool?.description;
@@ -121,9 +124,9 @@ export const SettingsToolDetail = () => {
     }
   }, 1_000);
 
-  const handleNameChange = (value: string) => {
-    setEditedName(value);
-    debouncedSaveName(value);
+  const handleNameChange = (newName: string) => {
+    setEditedName(newName);
+    debouncedSaveName(newName);
   };
 
   const debouncedSaveDescription = useDebouncedCallback(
@@ -173,11 +176,11 @@ export const SettingsToolDetail = () => {
       title={
         isCustomTool ? (
           <SettingsLogicFunctionLabelContainer
-            value={editedName ?? name ?? ''}
+            value={editedName ?? displayName ?? ''}
             onChange={handleNameChange}
           />
         ) : (
-          (name ?? '')
+          (displayName ?? '')
         )
       }
       links={[
@@ -189,7 +192,7 @@ export const SettingsToolDetail = () => {
           children: t`AI`,
           href: getSettingsPath(SettingsPath.AI, undefined, undefined, 'tools'),
         },
-        { children: editedName ?? name ?? '' },
+        { children: editedName ?? displayName ?? '' },
       ]}
     >
       <SettingsPageContainer>

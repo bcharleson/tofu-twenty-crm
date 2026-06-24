@@ -2,9 +2,9 @@ import { styled } from '@linaria/react';
 import { isNonEmptyString } from '@sniptt/guards';
 import { AppPath } from 'twenty-shared/types';
 import { getImageAbsoluteURI, isDefined } from 'twenty-shared/utils';
-import { Avatar } from 'twenty-ui-deprecated/display';
-import { UndecoratedLink } from 'twenty-ui-deprecated/navigation';
-import { themeCssVariables } from 'twenty-ui-deprecated/theme-constants';
+import { Avatar } from 'twenty-ui/data-display';
+import { UndecoratedLink } from 'twenty-ui/navigation';
+import { themeCssVariables } from 'twenty-ui/theme-constants';
 import { REACT_APP_SERVER_BASE_URL } from '~/config';
 import { useRedirectToDefaultDomain } from '~/modules/domain-manager/hooks/useRedirectToDefaultDomain';
 
@@ -13,6 +13,7 @@ type LogoProps = {
   secondaryLogo?: string | null;
   placeholder?: string | null;
   onClick?: () => void;
+  to?: AppPath;
 };
 
 const StyledContainer = styled.div`
@@ -55,6 +56,7 @@ export const Logo = ({
   secondaryLogo,
   placeholder,
   onClick,
+  to = AppPath.SignInUp,
 }: LogoProps) => {
   const { redirectToDefaultDomain } = useRedirectToDefaultDomain();
 
@@ -76,7 +78,11 @@ export const Logo = ({
 
   // When no workspace logo is set, render nothing — never fall back to the
   // Twenty default icon so every client deployment is fully white-labeled.
-  if (!hasPrimaryLogo && !isDefined(secondaryLogoUrl) && !isDefined(placeholder)) {
+  if (
+    !hasPrimaryLogo &&
+    !isDefined(secondaryLogoUrl) &&
+    !isDefined(placeholder)
+  ) {
     return null;
   }
 
@@ -89,10 +95,7 @@ export const Logo = ({
       ) : (
         // No logo uploaded yet — link back to default domain so admins can
         // still navigate, but show nothing instead of the Twenty icon.
-        <UndecoratedLink
-          to={AppPath.SignInUp}
-          onClick={redirectToDefaultDomain}
-        />
+        <UndecoratedLink to={to} onClick={() => redirectToDefaultDomain()} />
       )}
       {isDefined(secondaryLogoUrl) ? (
         <StyledSecondaryLogoContainer>
