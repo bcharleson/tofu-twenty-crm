@@ -343,12 +343,19 @@ export class WorkspaceInvitationService {
           plainText: true,
         });
 
-        const joinTeamMsg = msg`Join your team on Twenty`;
+        const workspaceDisplayName =
+          workspace.displayName?.trim() || 'your workspace';
+
+        const joinTeamMsg = msg`You're invited to join {workspaceName}`;
         const i18n = this.i18nService.getI18nInstance(sender.locale);
-        const subject = i18n._(joinTeamMsg);
+        const subject = i18n._(joinTeamMsg, {
+          workspaceName: workspaceDisplayName,
+        });
 
         await this.emailService.send({
-          from: `${sender.name.firstName} ${sender.name.lastName} (via Twenty) <${this.twentyConfigService.get('EMAIL_FROM_ADDRESS')}>`,
+          from: `${this.twentyConfigService.get(
+            'EMAIL_FROM_NAME',
+          )} <${this.twentyConfigService.get('EMAIL_FROM_ADDRESS')}>`,
           to: invitation.value.email,
           subject,
           text,

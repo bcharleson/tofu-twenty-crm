@@ -367,7 +367,7 @@ These cannot be done through the UI and require changes to this repo:
 | **White-label sign-in logo** — removed Twenty "20" fallback; sign-in page shows workspace logo (uploaded in Settings) or nothing | `Logo.tsx`, `SignInUp.tsx` | ✅ Done | Critical |
 | **Favicon / PWA / link previews** — workspace logo via `/favicon.ico`, server HTML inject, dynamic `/manifest.json` | `workspace-branding/*` (middleware + generate-workspace-manifest), `manifest.json`, `public/branding/` | ✅ Done | Critical |
 | Default seed data at workspace creation | `packages/twenty-server/src/engine/workspace-manager/standard-objects/` | ⬜ TODO | Medium |
-| Remove Twenty branding from email templates | `packages/twenty-emails/src/` | ⬜ TODO | Medium |
+| Remove Twenty branding from email templates | `packages/twenty-emails/src/` | ✅ Done Jul 2026 | Medium |
 | "Privacy Policy" / "Terms of Service" links on sign-in page | `packages/twenty-front/src/pages/auth/SignInUp.tsx` | ⬜ TODO | Medium |
 | Removing "Powered by Twenty" from any footer | Search `packages/twenty-front/src` for "Twenty" | ⬜ TODO | Low |
 

@@ -119,6 +119,6 @@ When merging `upstream/main` or reviewing the weekly sync PR:
 
 | Item | Location | Priority |
 |---|---|---|
-| Email template branding | `packages/twenty-emails/src/` | Medium |
+| ~~Email template branding~~ | `packages/twenty-emails/src/` | Done Jul 2026 — invite email white-label patch |
 | Custom ToS/Privacy links per client | Sign-in footer | Medium |
 | Replace bundled icon PNGs in `public/images/icons/` | Fork | Low (bypassed when workspace logo set). See `tofu/BRANDING.md` for the single place to manage defaults. |
