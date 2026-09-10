@@ -107,6 +107,7 @@ These are intentional changes to Twenty core files. Check each during every upst
 | **White-label invite email** | `workspace-invitation.service.ts`, `send-invite-link.email.tsx`, `twenty-emails/src/components/Logo.tsx`, `Footer.tsx` | From = `EMAIL_FROM_NAME`; no Twenty subject/footer/logo; drop "What is Twenty?" block | Jul 2026 |
 | **Hide Enterprise key upsell** | `useSettingsAdminTabs.ts`, `SettingsAdminTabContent.tsx`, `SettingsRoutes.tsx`, `SettingsEnterpriseFeatureGateCard.tsx` | Self-hosted fleet: no Admin Panel → Enterprise tab / Get Enterprise Key CTA. Do not unlock Twenty commercial modules. | Sep 2026 |
 | **Hide remaining Twenty upsell** | `SettingsRolePermissionsObjectLevelObjectForm.tsx`, `OrganizationAdornment.tsx`, `SettingsLogs.tsx`, `useSettingsNavigationItems.tsx`, `SettingsAdminVersionContainer.tsx`, `SettingsRoutes.tsx` | No Roles record-level Upgrade CTA; no Organization lock pills; no audit-log Upgrade; hide Community (Discord/@twentycrm); About shows current version only (not Twenty GitHub “latest”). | Sep 2026 |
+| **Upgrade: skip incomplete messageList view** | `2-20-workspace-command-1783525261001-create-message-list-view.command.ts` | If a workspace is missing a standard Message List column, skip that view instead of aborting 2.21–2.39. | Sep 2026 |
 
 ### How to re-apply after an upstream merge conflict
 

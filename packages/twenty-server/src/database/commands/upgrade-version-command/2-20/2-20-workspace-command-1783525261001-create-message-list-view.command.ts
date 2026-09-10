@@ -148,6 +148,17 @@ export class CreateMessageListViewCommand extends ProvisionedWorkspaceCommandRun
         `Failed to create messageList view:\n${JSON.stringify(result, null, 2)}`,
       );
 
+      const report = JSON.stringify(result);
+      // Customized workspaces (e.g. UC Advisers) may lack a standard
+      // messageList column. Do not abort the rest of the 2.21–2.39 upgrade.
+      if (report.includes('Field metadata not found')) {
+        this.logger.warn(
+          `Skipping messageList view for workspace ${workspaceId}: a standard view column field is missing`,
+        );
+
+        return;
+      }
+
       throw new Error(
         `Failed to create messageList view for workspace ${workspaceId}`,
       );
