@@ -196,7 +196,7 @@ const useSettingsNavigationItems = (): SettingsNavigationSection[] => {
           label: t`Community`,
           path: SettingsPath.Community,
           Icon: IconUsers,
-          isHidden: !permissionMap[PermissionFlagType.WORKSPACE],
+          isHidden: true,
         },
         {
           label: t`Support`,

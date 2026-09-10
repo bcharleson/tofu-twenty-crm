@@ -642,12 +642,6 @@ const SettingsAdminChats = lazy(() =>
   })),
 );
 
-const SettingsCommunity = lazy(() =>
-  import('~/pages/settings/community/SettingsCommunity').then((module) => ({
-    default: module.SettingsCommunity,
-  })),
-);
-
 const SettingsRoleCreate = lazy(() =>
   import('~/pages/settings/members/roles/SettingsRoleCreate').then(
     (module) => ({
@@ -1167,7 +1161,12 @@ const createSettingsRouteElements = ({
         />
       }
     >
-      <Route path={SettingsPath.Community} element={<SettingsCommunity />} />
+      <Route
+        path={SettingsPath.Community}
+        element={
+          <Navigate to={getSettingsPath(SettingsPath.AdminPanel)} replace />
+        }
+      />
     </Route>
   </>
 );

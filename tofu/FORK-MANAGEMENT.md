@@ -106,6 +106,7 @@ These are intentional changes to Twenty core files. Check each during every upst
 | **White-label timeline** | `getTimelineActivityAuthorFullName.ts` | System events show "System" not "Twenty" | May 26 2026 |
 | **White-label invite email** | `workspace-invitation.service.ts`, `send-invite-link.email.tsx`, `twenty-emails/src/components/Logo.tsx`, `Footer.tsx` | From = `EMAIL_FROM_NAME`; no Twenty subject/footer/logo; drop "What is Twenty?" block | Jul 2026 |
 | **Hide Enterprise key upsell** | `useSettingsAdminTabs.ts`, `SettingsAdminTabContent.tsx`, `SettingsRoutes.tsx`, `SettingsEnterpriseFeatureGateCard.tsx` | Self-hosted fleet: no Admin Panel → Enterprise tab / Get Enterprise Key CTA. Do not unlock Twenty commercial modules. | Sep 2026 |
+| **Hide remaining Twenty upsell** | `SettingsRolePermissionsObjectLevelObjectForm.tsx`, `OrganizationAdornment.tsx`, `SettingsLogs.tsx`, `useSettingsNavigationItems.tsx`, `SettingsAdminVersionContainer.tsx`, `SettingsRoutes.tsx` | No Roles record-level Upgrade CTA; no Organization lock pills; no audit-log Upgrade; hide Community (Discord/@twentycrm); About shows current version only (not Twenty GitHub “latest”). | Sep 2026 |
 
 ### How to re-apply after an upstream merge conflict
 
@@ -126,6 +127,16 @@ If `Logo.tsx` or `SignInUp.tsx` conflict on merge:
    - `PageFavicon.tsx` manifest + helmet use `${SERVER_URL}/favicon.ico`
    - `public/manifest.json` fallback icons → `/favicon.ico` only (no android-launcher paths)
 2. Run verify commands in [WHITE-LABEL.md](./WHITE-LABEL.md#verify-white-label-run-after-every-image-rollout)
+
+**Upsell patches (Sep 2026):** If any of these conflict, accept upstream then restore TOFU intent — **never** re-introduce a Get Enterprise Key / Upgrade / Organization-plan CTA:
+
+1. Admin Panel tabs: **no** Enterprise tab (`useSettingsAdminTabs.ts`). `#enterprise` falls back to General.
+2. `SettingsEnterpriseFeatureGateCard` and `OrganizationAdornment` **return null**.
+3. Roles object form: **do not render** `SettingsRolePermissionsObjectLevelRecordLevelSection` unless `isRLSBillingEntitlementEnabled` (do not edit the `@license Enterprise` section file).
+4. Audit logs: `renderUpgradeCard` is `null` — no Upgrade button.
+5. Settings nav: Community `isHidden: true`; `/settings/community` redirects to Admin Panel.
+6. Admin About: **Current version only** — do not show Twenty GitHub “Latest version”.
+7. Do **not** strip `/* @license Enterprise */` modules or fake a key. Client RLS is original AGPL code in the UCA private fork.
 
 See also: [WHITE-LABEL.md](./WHITE-LABEL.md) · [UPSTREAM-SYNC.md](./UPSTREAM-SYNC.md)
 

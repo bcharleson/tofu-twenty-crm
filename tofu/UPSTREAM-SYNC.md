@@ -23,8 +23,8 @@ It:
 
 ## What you do after the PR opens
 
-1. Read the PR diff — focus on files in the [Active Core Patches](FORK-MANAGEMENT.md#active-core-patches-track-these-on-every-upstream-merge) table
-2. If conflicts: re-apply TOFU white-label intent (see FORK-MANAGEMENT.md re-apply steps)
+1. Read the PR diff — focus on files in the [Active Core Patches](FORK-MANAGEMENT.md#active-core-patches-track-these-on-every-upstream-merge) table (white-label **and** upsell-hide)
+2. If conflicts: re-apply TOFU white-label intent (see FORK-MANAGEMENT.md re-apply steps). **Reject any reintroduction of Get Enterprise Key, Upgrade to access, Organization-plan pills, Community Discord/@twentycrm, or GitHub “Latest version”.**
 3. Merge the PR
 4. Tag a release: `git tag v2.8.6-tofu && git push origin v2.8.6-tofu`
 5. Docker publish workflow builds `ghcr.io/bcharleson/tofu-twenty:<tag>`

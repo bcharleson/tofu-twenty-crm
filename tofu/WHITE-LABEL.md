@@ -46,6 +46,21 @@ Full table and re-apply steps: [FORK-MANAGEMENT.md](./FORK-MANAGEMENT.md#active-
 | `getTimelineActivityAuthorFullName.ts` | System events → "System", not "Twenty" |
 | `DefaultWorkspaceLogo.ts`, `DefaultWorkspaceName.ts`, `title-utils.ts`, `index.html` | Generic "CRM" defaults until workspace is configured |
 
+### Twenty upsell (self-hosted — never re-enable)
+
+| File | Intent |
+|---|---|
+| `useSettingsAdminTabs.ts` | No Admin Panel **Enterprise** tab |
+| `SettingsEnterpriseFeatureGateCard.tsx` | No Get Enterprise Key cards |
+| `OrganizationAdornment.tsx` | No “Organization” lock pills |
+| `SettingsRolePermissionsObjectLevelObjectForm.tsx` | No Roles **Upgrade to access** record-level CTA |
+| `SettingsLogs.tsx` | No audit-log Upgrade CTA |
+| `useSettingsNavigationItems.tsx` | Hide **Community** (Twenty Discord / X) |
+| `SettingsAdminVersionContainer.tsx` | Current version only — not Twenty GitHub latest |
+| `SettingsRoutes.tsx` | `/settings/enterprise` and `/settings/community` → Admin Panel |
+
+Do not unlock Twenty commercial modules. UCA record-level is a custom AGPL patch in `tofu-twenty-ucadvisers`.
+
 ---
 
 ## Per-instance setup (after deploy)

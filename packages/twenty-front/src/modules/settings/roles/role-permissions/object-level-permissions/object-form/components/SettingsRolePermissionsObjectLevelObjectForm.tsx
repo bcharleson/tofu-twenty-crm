@@ -178,11 +178,13 @@ export const SettingsRolePermissionsObjectLevelObjectForm = ({
           objectMetadataItem={objectMetadataItem}
           roleId={roleId}
         />
-        <SettingsRolePermissionsObjectLevelRecordLevelSection
-          objectMetadataItem={objectMetadataItem}
-          roleId={roleId}
-          hasOrganizationPlan={isRLSBillingEntitlementEnabled}
-        />
+        {isRLSBillingEntitlementEnabled ? (
+          <SettingsRolePermissionsObjectLevelRecordLevelSection
+            objectMetadataItem={objectMetadataItem}
+            roleId={roleId}
+            hasOrganizationPlan={isRLSBillingEntitlementEnabled}
+          />
+        ) : null}
       </SettingsPageContainer>
     </SettingsPageLayout>
   );
