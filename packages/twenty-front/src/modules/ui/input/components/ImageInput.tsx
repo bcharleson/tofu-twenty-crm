@@ -120,7 +120,7 @@ export const ImageInput = ({
     : null;
 
   useEffect(() => {
-    setIsPictureURLError(false);
+    setIsPictureUrlError(false);
   }, [pictureURI]);
 
   return (
