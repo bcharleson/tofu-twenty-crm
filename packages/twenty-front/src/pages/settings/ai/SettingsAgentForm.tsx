@@ -5,26 +5,27 @@ import { useDebouncedCallback } from 'use-debounce';
 
 import { SaveAndCancelButtons } from '@/settings/components/SaveAndCancelButtons/SaveAndCancelButtons';
 import { SettingsPageContainer } from '@/settings/components/SettingsPageContainer';
+import { SettingsTabBar } from '@/settings/components/layout/SettingsTabBar';
 import { SettingsRolesQueryEffect } from '@/settings/roles/components/SettingsRolesQueryEffect';
 import { useSaveDraftRoleToDB } from '@/settings/roles/role/hooks/useSaveDraftRoleToDB';
 import { settingsDraftRoleFamilyState } from '@/settings/roles/states/settingsDraftRoleFamilyState';
 import { settingsPersistedRoleFamilyState } from '@/settings/roles/states/settingsPersistedRoleFamilyState';
 import { useSnackBar } from '@/ui/feedback/snack-bar-manager/hooks/useSnackBar';
 import { SettingsPageLayout } from '@/settings/components/layout/SettingsPageLayout';
-import { TabList } from '@/ui/layout/tab-list/components/TabList';
 import { activeTabIdComponentState } from '@/ui/layout/tab-list/states/activeTabIdComponentState';
 import { useAtomComponentStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomComponentStateValue';
 import { t } from '@lingui/core/macro';
 import { AppPath, SettingsPath } from 'twenty-shared/types';
 import { getSettingsPath, isDefined } from 'twenty-shared/utils';
 import {
-  IconList,
   IconListCheck,
   IconLock,
   IconSettings,
+  IconTerminal,
+  useIcons,
 } from 'twenty-ui/icon';
 import { Section } from 'twenty-ui/layout';
-import { themeCssVariables } from 'twenty-ui/theme-constants';
+import { ThemeContext, themeCssVariables } from 'twenty-ui/theme-constants';
 import { useMutation, useQuery } from '@apollo/client/react';
 import {
   type CreateAgentInput,
@@ -37,7 +38,7 @@ import { useNavigateSettings } from '~/hooks/useNavigateSettings';
 
 import { useAtomFamilyStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomFamilyStateValue';
 import { useSetAtomFamilyState } from '@/ui/utilities/state/jotai/hooks/useSetAtomFamilyState';
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { isDeeplyEqual } from '~/utils/isDeeplyEqual';
 import { SettingsAgentDetailSkeletonLoader } from './components/SettingsAgentDetailSkeletonLoader';
 import { SettingsAgentEvalsTab } from './components/SettingsAgentEvalsTab';
@@ -55,11 +56,9 @@ const StyledContentContainer = styled.div`
   width: 100%;
 `;
 
-const StyledTabListContainer = styled.div`
-  margin-bottom: ${themeCssVariables.spacing[8]};
-`;
-
 export const SettingsAgentForm = ({ mode }: { mode: 'create' | 'edit' }) => {
+  const { theme } = useContext(ThemeContext);
+  const { getIcon } = useIcons();
   const { agentId = '' } = useParams<{ agentId: string }>();
   const navigate = useNavigateSettings();
   const navigateApp = useNavigateApp();
@@ -107,7 +106,7 @@ export const SettingsAgentForm = ({ mode }: { mode: 'create' | 'edit' }) => {
           name: agent.name,
           label: agent.label,
           description: agent.description,
-          icon: agent.icon || 'IconRobot',
+          icon: agent.icon || 'IconLego',
           modelId: agent.modelId,
           role: agent.roleId,
           prompt: agent.prompt,
@@ -277,7 +276,7 @@ export const SettingsAgentForm = ({ mode }: { mode: 'create' | 'edit' }) => {
     {
       id: SETTINGS_AGENT_DETAIL_TABS.TABS_IDS.LOGS,
       title: t`Logs`,
-      Icon: IconList,
+      Icon: IconTerminal,
     },
   ];
 
@@ -381,6 +380,7 @@ export const SettingsAgentForm = ({ mode }: { mode: 'create' | 'edit' }) => {
       ? t`Agent`
       : agent?.label
     : t`New Agent`;
+  const AgentIcon = getIcon(formValues.icon || 'IconLego');
   const breadcrumbText = !isCreateMode
     ? loading
       ? t`Agent`
@@ -403,6 +403,9 @@ export const SettingsAgentForm = ({ mode }: { mode: 'create' | 'edit' }) => {
       <SettingsRolesQueryEffect />
       <SettingsPageLayout
         title={title}
+        icon={
+          <AgentIcon size={theme.icon.size.md} stroke={theme.icon.stroke.sm} />
+        }
         actionButton={
           isCreateMode ? (
             <SaveAndCancelButtons
@@ -422,51 +425,50 @@ export const SettingsAgentForm = ({ mode }: { mode: 'create' | 'edit' }) => {
           { children: t`AI`, href: getSettingsPath(SettingsPath.AI) },
           { children: breadcrumbText },
         ]}
+        secondaryBar={
+          isEditMode && loading ? undefined : (
+            <SettingsTabBar
+              tabs={tabs}
+              componentInstanceId={tabListComponentId}
+            />
+          )
+        }
       >
         <SettingsPageContainer>
           <Section>
             {isEditMode && loading ? (
               <SettingsAgentDetailSkeletonLoader />
             ) : (
-              <>
-                <StyledTabListContainer>
-                  <TabList
-                    tabs={tabs}
-                    className="tab-list"
-                    componentInstanceId={tabListComponentId}
+              <StyledContentContainer>
+                {isRoleTab && (
+                  <SettingsAgentRoleTab
+                    formValues={formValues}
+                    onFieldChange={handleFieldChange}
+                    disabled={isFormDisabled}
+                    agentId={agentId}
+                    agentLabel={formValues.label}
                   />
-                </StyledTabListContainer>
-                <StyledContentContainer>
-                  {isRoleTab && (
-                    <SettingsAgentRoleTab
-                      formValues={formValues}
-                      onFieldChange={handleFieldChange}
-                      disabled={isFormDisabled}
-                      agentId={agentId}
-                      agentLabel={formValues.label}
-                    />
-                  )}
-                  {isSettingsTab && (
-                    <SettingsAgentSettingsTab
-                      formValues={formValues}
-                      onFieldChange={handleFieldChange}
-                      disabled={isFormDisabled}
-                      agent={agent}
-                    />
-                  )}
-                  {isEvalsTab && (
-                    <SettingsAgentEvalsTab
-                      agentId={agentId}
-                      evaluationInputs={formValues.evaluationInputs}
-                      onEvaluationInputsChange={(inputs) =>
-                        handleFieldChange('evaluationInputs', inputs)
-                      }
-                      disabled={isEvalsDisabled}
-                    />
-                  )}
-                  {isLogsTab && <SettingsAgentLogsTab agentId={agentId} />}
-                </StyledContentContainer>
-              </>
+                )}
+                {isSettingsTab && (
+                  <SettingsAgentSettingsTab
+                    formValues={formValues}
+                    onFieldChange={handleFieldChange}
+                    disabled={isFormDisabled}
+                    agent={agent}
+                  />
+                )}
+                {isEvalsTab && (
+                  <SettingsAgentEvalsTab
+                    agentId={agentId}
+                    evaluationInputs={formValues.evaluationInputs}
+                    onEvaluationInputsChange={(inputs) =>
+                      handleFieldChange('evaluationInputs', inputs)
+                    }
+                    disabled={isEvalsDisabled}
+                  />
+                )}
+                {isLogsTab && <SettingsAgentLogsTab agentId={agentId} />}
+              </StyledContentContainer>
             )}
           </Section>
         </SettingsPageContainer>

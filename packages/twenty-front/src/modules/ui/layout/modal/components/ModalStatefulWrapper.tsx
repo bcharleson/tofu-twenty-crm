@@ -7,6 +7,7 @@ import { useModalContainer } from '@/ui/layout/modal/contexts/ModalContainerCont
 import { useModal } from '@/ui/layout/modal/hooks/useModal';
 import { isModalOpenedComponentState } from '@/ui/layout/modal/states/isModalOpenedComponentState';
 import { type ModalStatefulWrapperProps } from '@/ui/layout/modal/types/ModalStatefulWrapperProps';
+import { useWorkspaceSurfaceScopedComponentInstanceId } from '@/ui/layout/hooks/useWorkspaceSurfaceScopedComponentInstanceId';
 import { ClickOutsideListenerContext } from '@/ui/utilities/pointer-event/contexts/ClickOutsideListenerContext';
 import { useIsMobile } from '@/ui/utilities/responsive/hooks/useIsMobile';
 import { useAtomComponentStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomComponentStateValue';
@@ -30,7 +31,10 @@ export const ModalStatefulWrapper = ({
   smallBorderRadius,
   narrowWidth,
   autoHeight,
+  width,
 }: ModalStatefulWrapperProps) => {
+  const scopedModalInstanceId =
+    useWorkspaceSurfaceScopedComponentInstanceId(modalInstanceId);
   const isMobile = useIsMobile();
   const modalRef = useRef<HTMLDivElement>(null);
   const { container } = useModalContainer();
@@ -40,7 +44,7 @@ export const ModalStatefulWrapper = ({
 
   const isModalOpened = useAtomComponentStateValue(
     isModalOpenedComponentState,
-    modalInstanceId,
+    scopedModalInstanceId,
   );
 
   const { closeModal } = useModal();
@@ -48,13 +52,13 @@ export const ModalStatefulWrapper = ({
   const handleClose = () => {
     onClose?.();
     if (shouldCloseModalOnClickOutsideOrEscape) {
-      closeModal(modalInstanceId);
+      closeModal(scopedModalInstanceId);
     }
   };
 
   return (
     <ModalComponentInstanceContext.Provider
-      value={{ instanceId: modalInstanceId }}
+      value={{ instanceId: scopedModalInstanceId }}
     >
       <ClickOutsideListenerContext.Provider
         value={{
@@ -63,7 +67,7 @@ export const ModalStatefulWrapper = ({
       >
         {isModalOpened && (
           <ModalHotkeysAndClickOutsideEffect
-            modalInstanceId={modalInstanceId}
+            modalInstanceId={scopedModalInstanceId}
             modalRef={modalRef}
             onEnter={onEnter}
             isClosable={isClosable}
@@ -82,6 +86,7 @@ export const ModalStatefulWrapper = ({
           smallBorderRadius={smallBorderRadius}
           narrowWidth={narrowWidth}
           autoHeight={autoHeight}
+          width={width}
           modalZIndex={RootStackingContextZIndices.RootModal}
           backdropZIndex={RootStackingContextZIndices.RootModalBackDrop}
           backdropClickOutsideId={MODAL_BACKDROP_CLICK_OUTSIDE_ID}

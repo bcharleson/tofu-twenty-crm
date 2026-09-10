@@ -1,8 +1,8 @@
 import {
   IconBox,
   IconDownload,
-  IconGitBranch,
   IconTag,
+  IconVersions,
   IconWorld,
 } from 'twenty-ui/icon';
 import { H2Title } from 'twenty-ui/typography';
@@ -108,28 +108,26 @@ export const SettingsApplicationRegistrationGeneralInfo = ({
       },
     ];
 
-    if (isDefined(ownerWorkspace?.displayName)) {
-      items.push({
-        Icon: IconTag,
-        label: t`Owner`,
-        value: (
-          <Chip
-            size={ChipSize.Large}
-            variant={ChipVariant.Highlighted}
-            clickable={false}
-            leftComponent={
-              <AvatarOrIcon
-                avatarType="rounded"
-                avatarUrl={getAbsoluteImageUrl(
-                  ownerWorkspace?.logo ?? undefined,
-                )}
-              />
-            }
-            label={ownerWorkspace.displayName}
-          />
-        ),
-      });
-    }
+    items.push({
+      Icon: IconTag,
+      label: t`Owner`,
+      value: isDefined(ownerWorkspace?.displayName) ? (
+        <Chip
+          size={ChipSize.Large}
+          variant={ChipVariant.Highlighted}
+          clickable={false}
+          leftComponent={
+            <AvatarOrIcon
+              avatarType="rounded"
+              avatarUrl={getAbsoluteImageUrl(ownerWorkspace?.logo ?? undefined)}
+            />
+          }
+          label={ownerWorkspace.displayName}
+        />
+      ) : (
+        <Tag color="orange" text={t`Unclaimed`} />
+      ),
+    });
 
     switch (registration.sourceType) {
       case ApplicationRegistrationSourceType.NPM:
@@ -178,7 +176,7 @@ export const SettingsApplicationRegistrationGeneralInfo = ({
 
     if (isNonEmptyString(registration.latestAvailableVersion)) {
       items.push({
-        Icon: IconGitBranch,
+        Icon: IconVersions,
         label: t`Latest version`,
         value: registration.latestAvailableVersion,
       });

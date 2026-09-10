@@ -1,3 +1,8 @@
+import {
+  MetadataReadability,
+  MetadataWritability,
+  ObjectOpenRecordIn,
+} from 'twenty-shared/types';
 import { faker } from '@faker-js/faker';
 import { TWENTY_STANDARD_APPLICATION_UNIVERSAL_IDENTIFIER } from 'twenty-shared/application';
 
@@ -24,8 +29,12 @@ export const getFlatObjectMetadataMock = (
     objectPermissionIds: [],
     fieldPermissionIds: [],
     fieldIds: [],
+    pageLayoutIds: [],
+    commandMenuItemIds: [],
     description: 'default flat object metadata description',
     icon: 'icon',
+    writability: MetadataWritability.OPEN,
+    readability: MetadataReadability.OPEN,
     color: null,
     id: faker.string.uuid(),
     imageIdentifierFieldMetadataId,
@@ -37,6 +46,7 @@ export const getFlatObjectMetadataMock = (
     isSystem: false,
     isUIEditable: true,
     isUICreatable: true,
+    openRecordIn: ObjectOpenRecordIn.USER_CHOICE,
     labelIdentifierFieldMetadataId,
     labelPlural: 'default flat object metadata label plural',
     labelSingular: 'default flat object metadata label singular',
@@ -44,7 +54,7 @@ export const getFlatObjectMetadataMock = (
     nameSingular: 'defaultflatObjectMetadataNameSingular',
     shortcut: 'shortcut',
     applicationId,
-    standardOverrides: null,
+    overrides: null,
     targetTableName: '',
     workspaceId: faker.string.uuid(),
     createdAt,
@@ -57,6 +67,8 @@ export const getFlatObjectMetadataMock = (
     viewUniversalIdentifiers: [],
     indexMetadataUniversalIdentifiers: [],
     searchFieldMetadataUniversalIdentifiers: [],
+    pageLayoutUniversalIdentifiers: [],
+    commandMenuItemUniversalIdentifiers: [],
     labelIdentifierFieldMetadataUniversalIdentifier:
       labelIdentifierFieldMetadataId,
     imageIdentifierFieldMetadataUniversalIdentifier:
@@ -69,7 +81,7 @@ export const getStandardFlatObjectMetadataMock = (
   overrides: Omit<FlatObjectMetadataOverrides, 'isCustom' | 'isSystem'>,
 ) => {
   return getFlatObjectMetadataMock({
-    standardOverrides: {},
+    overrides: {},
     isSystem: true,
     applicationUniversalIdentifier:
       TWENTY_STANDARD_APPLICATION_UNIVERSAL_IDENTIFIER,

@@ -6,23 +6,25 @@ import { HelmetProvider } from '@dr.pogodin/react-helmet';
 import {
   createMemoryRouter,
   createRoutesFromElements,
-  Outlet,
   Route,
   RouterProvider,
 } from 'react-router-dom';
 import { ClientConfigProviderEffect } from '@/client-config/components/ClientConfigProviderEffect';
+import { MinimalMetadataGate } from '@/metadata-store/components/MinimalMetadataGate';
 import { ApolloCoreClientMockedProvider } from '@/object-metadata/hooks/__mocks__/ApolloCoreClientMockedProvider';
 
 import { DefaultLayout } from '@/ui/layout/page/components/DefaultLayout';
-import { MinimalMetadataGater } from '@/metadata-store/components/MinimalMetadataGater';
 import { UserMetadataProviderInitialEffect } from '@/metadata-store/effect-components/UserMetadataProviderInitialEffect';
+import { UserContextProvider } from '@/users/components/UserContextProvider';
 import { MockedMetadataLoadEffect } from '~/testing/decorators/MockedMetadataLoadEffect';
 import { jotaiStore } from '@/ui/utilities/state/jotai/jotaiStore';
 import { type JSX, useState } from 'react';
 import { ClientConfigProvider } from '~/modules/client-config/components/ClientConfigProvider';
 import { mockedApolloClient } from '~/testing/mockedApolloClient';
 
-import { MainContextStoreProvider } from '@/context-store/components/MainContextStoreProvider';
+import { RouteContextStoreProvider } from '@/context-store/components/RouteContextStoreProvider';
+import { MAIN_CONTEXT_STORE_INSTANCE_ID } from '@/context-store/constants/MainContextStoreInstanceId';
+import { ContextStoreComponentInstanceContext } from '@/context-store/states/contexts/ContextStoreComponentInstanceContext';
 import { PreComputedChipGeneratorsProvider } from '@/object-metadata/components/PreComputedChipGeneratorsProvider';
 import { RecordComponentInstanceContextsWrapper } from '@/object-record/components/RecordComponentInstanceContextsWrapper';
 import { SnackBarComponentInstanceContext } from '@/ui/feedback/snack-bar-manager/contexts/SnackBarComponentInstanceContext';
@@ -95,22 +97,26 @@ const Providers = () => {
               <UserMetadataProviderInitialEffect />
               <MockedMetadataLoadEffect />
               <WorkspaceProviderEffect />
-              <MinimalMetadataGater>
+              <UserContextProvider>
                 <ApolloCoreClientMockedProvider>
-                  <PreComputedChipGeneratorsProvider>
-                    <FullHeightStorybookLayout>
-                      <HelmetProvider>
-                        <IconsProvider>
-                          <RecordComponentInstanceContextsWrapper componentInstanceId="storybook-test-record">
-                            <Outlet />
-                          </RecordComponentInstanceContextsWrapper>
-                        </IconsProvider>
-                      </HelmetProvider>
-                    </FullHeightStorybookLayout>
-                  </PreComputedChipGeneratorsProvider>
-                  <MainContextStoreProvider />
+                  <ContextStoreComponentInstanceContext.Provider
+                    value={{ instanceId: MAIN_CONTEXT_STORE_INSTANCE_ID }}
+                  >
+                    <PreComputedChipGeneratorsProvider>
+                      <FullHeightStorybookLayout>
+                        <HelmetProvider>
+                          <IconsProvider>
+                            <RecordComponentInstanceContextsWrapper componentInstanceId="storybook-test-record">
+                              <MinimalMetadataGate />
+                            </RecordComponentInstanceContextsWrapper>
+                          </IconsProvider>
+                        </HelmetProvider>
+                      </FullHeightStorybookLayout>
+                    </PreComputedChipGeneratorsProvider>
+                    <RouteContextStoreProvider />
+                  </ContextStoreComponentInstanceContext.Provider>
                 </ApolloCoreClientMockedProvider>
-              </MinimalMetadataGater>
+              </UserContextProvider>
             </ClientConfigProvider>
           </I18nProvider>
         </ApolloProvider>

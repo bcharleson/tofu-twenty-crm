@@ -1,4 +1,5 @@
 import {
+  MetadataWritability,
   type FieldMetadataComplexOption,
   type FieldMetadataDefaultOption,
   type FieldMetadataDefaultValue,
@@ -87,8 +88,14 @@ export const createStandardFieldFlatMetadata = <
     isNullable,
     isUnique,
     isUIEditable,
+    writability:
+      name in PARTIAL_SYSTEM_FLAT_FIELD_METADATAS
+        ? PARTIAL_SYSTEM_FLAT_FIELD_METADATAS[
+            name as keyof typeof PARTIAL_SYSTEM_FLAT_FIELD_METADATAS
+          ].writability
+        : MetadataWritability.OPEN,
     isLabelSyncedWithName: false,
-    standardOverrides: null,
+    overrides: null,
     defaultValue: defaultValue ?? null,
     settings: settings ?? null,
     options: fieldOptions ?? null,
@@ -100,6 +107,7 @@ export const createStandardFieldFlatMetadata = <
     fieldPermissionIds: [],
     kanbanAggregateOperationViewIds: [],
     calendarViewIds: [],
+    calendarEndViewIds: [],
     mainGroupByFieldMetadataViewIds: [],
     createdAt: now,
     updatedAt: now,
@@ -114,9 +122,12 @@ export const createStandardFieldFlatMetadata = <
     fieldPermissionUniversalIdentifiers: [],
     kanbanAggregateOperationViewUniversalIdentifiers: [],
     calendarViewUniversalIdentifiers: [],
+    calendarEndViewUniversalIdentifiers: [],
     mainGroupByFieldMetadataViewUniversalIdentifiers: [],
     viewSortIds: [],
     viewSortUniversalIdentifiers: [],
+    searchFieldMetadataIds: [],
+    searchFieldMetadataUniversalIdentifiers: [],
     universalSettings: settings ?? null,
   };
 };

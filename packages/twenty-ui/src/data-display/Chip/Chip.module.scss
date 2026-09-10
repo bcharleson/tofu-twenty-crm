@@ -17,7 +17,8 @@
   font-weight: inherit;
   background-color: inherit;
   border: none;
-  border-radius: var(--t-border-radius-sm);
+  border-radius: var(--t-border-radius-sm-round);
+  corner-shape: round;
 
   & > svg {
     flex-shrink: 0;
@@ -60,8 +61,10 @@
 .backgroundHighlighted {
   background-color: var(--t-background-transparent-light);
 
-  &:hover {
-    background-color: var(--t-background-transparent-medium);
+  @include hover-capable {
+    &:hover {
+      background-color: var(--t-background-transparent-medium);
+    }
   }
 
   &:active {
@@ -83,8 +86,10 @@
 
 // Applied only when variant is regular, clickable and not disabled.
 .interactiveRegular {
-  &:hover {
-    background-color: var(--t-background-transparent-light);
+  @include hover-capable {
+    &:hover {
+      background-color: var(--t-background-transparent-light);
+    }
   }
 
   &:active {

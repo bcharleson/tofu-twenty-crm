@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 
+import { type GraphError } from '@microsoft/microsoft-graph-client';
 import { type Subscription } from '@microsoft/microsoft-graph-types';
+import { ApiPath, WebhookSubscriptionChannelType } from 'twenty-shared/types';
 import { isDefined } from 'twenty-shared/utils';
 
-import { WebhookSubscriptionChannelType } from 'twenty-shared/types';
-
 import { TwentyConfigService } from 'src/engine/core-modules/twenty-config/twenty-config.service';
-import { MICROSOFT_SUBSCRIPTION_TTL_MS } from 'src/modules/connected-account/webhook-subscription-manager/drivers/microsoft/microsoft-subscription-ttl-ms.constant';
+import { MICROSOFT_SUBSCRIPTION_TTL_MS } from 'src/modules/connected-account/webhook-subscription-manager/drivers/microsoft/constants/microsoft-subscription-ttl-ms.constant';
 import {
   WebhookSubscriptionDriverException,
   WebhookSubscriptionDriverExceptionCode,
@@ -17,6 +17,8 @@ import {
   type WebhookSubscriptionResult,
 } from 'src/modules/connected-account/webhook-subscription-manager/types/webhook-subscription-driver.type';
 import { MicrosoftOAuth2ClientProvider } from 'src/modules/connected-account/oauth2-client-manager/drivers/microsoft/microsoft-oauth2-client.provider';
+import { parseMicrosoftWebhookSubscriptionError } from 'src/modules/connected-account/webhook-subscription-manager/drivers/microsoft/utils/parse-microsoft-webhook-subscription-error.util';
+import { MICROSOFT_SUBSCRIPTION_TTL_BUFFER_MS } from './constants/microsoft-subscription-ttl-ms-buffer.constant';
 
 type MicrosoftGraphResourceConfig = Pick<
   Subscription,
@@ -32,12 +34,12 @@ const MICROSOFT_GRAPH_RESOURCE_CONFIG_BY_CHANNEL_TYPE: Record<
   [WebhookSubscriptionChannelType.MESSAGING]: {
     resource: '/me/messages',
     changeType: 'created,updated',
-    notificationPath: 'webhooks/microsoft/messaging',
+    notificationPath: `${ApiPath.Webhooks}/microsoft/messaging`,
   },
   [WebhookSubscriptionChannelType.CALENDAR]: {
     resource: '/me/events',
     changeType: 'created,updated,deleted',
-    notificationPath: 'webhooks/microsoft/calendar',
+    notificationPath: `${ApiPath.Webhooks}/microsoft/calendar`,
   },
 };
 
@@ -60,20 +62,26 @@ export class MicrosoftWebhookSubscriptionDriver implements WebhookSubscriptionDr
 
     const notificationUrl = `${this.twentyConfigService.get('SERVER_URL')}/${resourceConfig.notificationPath}`;
 
+    const SUBSCRIPTION_TTL_MS =
+      MICROSOFT_SUBSCRIPTION_TTL_MS - MICROSOFT_SUBSCRIPTION_TTL_BUFFER_MS;
+
     const subscriptionPayload: Subscription = {
       changeType: resourceConfig.changeType,
       notificationUrl,
       lifecycleNotificationUrl: notificationUrl,
       resource: resourceConfig.resource,
       expirationDateTime: new Date(
-        Date.now() + MICROSOFT_SUBSCRIPTION_TTL_MS,
+        Date.now() + SUBSCRIPTION_TTL_MS,
       ).toISOString(),
       clientState,
     };
 
     const subscription: Subscription = await graphClient
       .api('/subscriptions')
-      .post(subscriptionPayload);
+      .post(subscriptionPayload)
+      .catch((error: GraphError) => {
+        throw parseMicrosoftWebhookSubscriptionError(error, { cause: error });
+      });
 
     return this.toResult(subscription);
   }
@@ -85,15 +93,21 @@ export class MicrosoftWebhookSubscriptionDriver implements WebhookSubscriptionDr
       context.connectedAccountId,
     );
 
+    const SUBSCRIPTION_TTL_MS =
+      MICROSOFT_SUBSCRIPTION_TTL_MS - MICROSOFT_SUBSCRIPTION_TTL_BUFFER_MS;
+
     const subscriptionPatch: Subscription = {
       expirationDateTime: new Date(
-        Date.now() + MICROSOFT_SUBSCRIPTION_TTL_MS,
+        Date.now() + SUBSCRIPTION_TTL_MS,
       ).toISOString(),
     };
 
     const renewedSubscription: Subscription = await graphClient
       .api(`/subscriptions/${context.externalSubscriptionId}`)
-      .patch(subscriptionPatch);
+      .patch(subscriptionPatch)
+      .catch((error: GraphError) => {
+        throw parseMicrosoftWebhookSubscriptionError(error, { cause: error });
+      });
 
     return this.toResult(renewedSubscription);
   }
@@ -109,7 +123,10 @@ export class MicrosoftWebhookSubscriptionDriver implements WebhookSubscriptionDr
 
     await graphClient
       .api(`/subscriptions/${context.externalSubscriptionId}`)
-      .delete();
+      .delete()
+      .catch((error: GraphError) => {
+        throw parseMicrosoftWebhookSubscriptionError(error, { cause: error });
+      });
   }
 
   private toResult(subscription: Subscription): WebhookSubscriptionResult {

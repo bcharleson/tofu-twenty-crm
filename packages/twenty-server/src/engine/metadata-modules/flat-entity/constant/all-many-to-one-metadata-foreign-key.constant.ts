@@ -47,6 +47,9 @@ export const ALL_MANY_TO_ONE_METADATA_FOREIGN_KEY = {
     availabilityObjectMetadata: {
       foreignKey: 'availabilityObjectMetadataId',
     },
+    navigationTargetObjectMetadata: {
+      foreignKey: 'navigationTargetObjectMetadataId',
+    },
     frontComponent: {
       foreignKey: 'frontComponentId',
     },
@@ -97,6 +100,9 @@ export const ALL_MANY_TO_ONE_METADATA_FOREIGN_KEY = {
     application: null,
     calendarFieldMetadata: {
       foreignKey: 'calendarFieldMetadataId',
+    },
+    calendarEndFieldMetadata: {
+      foreignKey: 'calendarEndFieldMetadataId',
     },
     kanbanAggregateOperationFieldMetadata: {
       foreignKey: 'kanbanAggregateOperationFieldMetadataId',
@@ -166,6 +172,9 @@ export const ALL_MANY_TO_ONE_METADATA_FOREIGN_KEY = {
   roleTarget: {
     role: {
       foreignKey: 'roleId',
+    },
+    agent: {
+      foreignKey: 'agentId',
     },
     apiKey: null,
     workspace: null,
@@ -303,6 +312,10 @@ export const ALL_MANY_TO_ONE_METADATA_FOREIGN_KEY = {
     workspace: null,
     application: null,
   },
+  timelineActivityType: {
+    workspace: null,
+    application: null,
+  },
   searchFieldMetadata: {
     workspace: null,
     application: null,
@@ -311,6 +324,9 @@ export const ALL_MANY_TO_ONE_METADATA_FOREIGN_KEY = {
     },
     fieldMetadata: {
       foreignKey: 'fieldMetadataId',
+    },
+    tsVectorFieldMetadata: {
+      foreignKey: 'tsVectorFieldMetadataId',
     },
   },
 } as const satisfies ManyToOneMetadataRelationsProperties;

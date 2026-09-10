@@ -2,13 +2,20 @@ import { type MessageDescriptor } from '@lingui/core';
 import { type MetadataRoute } from 'next';
 
 export type WebsiteRouteId =
+  | 'apps'
+  | 'comparePricingDynamics'
+  | 'comparePricingHubspot'
+  | 'comparePricingPipedrive'
+  | 'comparePricingSalesforce'
+  | 'comparePricingSap'
   | 'customers'
   | 'enterpriseActivate'
   | 'halftone'
   | 'home'
   | 'partners'
   | 'partnersApply'
-  | 'partnersList'
+  | 'partnersBecome'
+  | 'partnersBrief'
   | 'pricing'
   | 'privacyPolicy'
   | 'product'

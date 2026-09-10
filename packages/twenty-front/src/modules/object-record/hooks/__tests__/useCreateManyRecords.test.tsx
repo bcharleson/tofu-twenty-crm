@@ -2,6 +2,7 @@ import { act, renderHook } from '@testing-library/react';
 import { v4 } from 'uuid';
 
 import { CoreObjectNameSingular } from 'twenty-shared/types';
+import { triggerCreateRecordsOptimisticEffect } from '@/apollo/optimistic-effect/utils/triggerCreateRecordsOptimisticEffect';
 import {
   query,
   response,
@@ -12,10 +13,14 @@ import { useRefetchAggregateQueries } from '@/object-record/hooks/useRefetchAggr
 import { getJestMetadataAndApolloMocksWrapper } from '~/testing/jest/getJestMetadataAndApolloMocksWrapper';
 
 jest.mock('uuid', () => ({
+  ...jest.requireActual('uuid'),
   v4: jest.fn(),
 }));
 
 jest.mock('@/object-record/hooks/useRefetchAggregateQueries');
+jest.mock(
+  '@/apollo/optimistic-effect/utils/triggerCreateRecordsOptimisticEffect',
+);
 const mockRefetchAggregateQueries = jest.fn();
 jest.mocked(useRefetchAggregateQueries).mockReturnValue({
   refetchAggregateQueries: mockRefetchAggregateQueries,
@@ -112,6 +117,13 @@ describe('useCreateManyRecords', () => {
     mocks[1].request.variables.data.forEach((record: any) => {
       expect(record).not.toHaveProperty('id');
     });
+    expect(triggerCreateRecordsOptimisticEffect).toHaveBeenCalledTimes(1);
+    expect(triggerCreateRecordsOptimisticEffect).toHaveBeenCalledWith(
+      expect.objectContaining({
+        recordsToCreate: response,
+        checkForRecordInCache: false,
+      }),
+    );
     expect(mockRefetchAggregateQueries).toHaveBeenCalledTimes(1);
   });
 });

@@ -21,6 +21,7 @@ import { toToolJsonSchema } from 'src/engine/core-modules/record-crud/utils/to-t
 import { type ToolDescriptor } from 'src/engine/core-modules/tool-provider/types/tool-descriptor.type';
 import { type ToolIndexEntry } from 'src/engine/core-modules/tool-provider/types/tool-index-entry.type';
 import { CodeInterpreterService } from 'src/engine/core-modules/code-interpreter/code-interpreter.service';
+import { CreateCalendarEventTool } from 'src/engine/core-modules/tool/tools/calendar-tool/create-calendar-event-tool';
 import { CodeInterpreterTool } from 'src/engine/core-modules/tool/tools/code-interpreter-tool/code-interpreter-tool';
 import { DraftEmailTool } from 'src/engine/core-modules/tool/tools/email-tool/draft-email-tool';
 import { SendEmailTool } from 'src/engine/core-modules/tool/tools/email-tool/send-email-tool';
@@ -32,6 +33,7 @@ import { SearchHelpCenterTool } from 'src/engine/core-modules/tool/tools/search-
 import { type ToolOutput } from 'src/engine/core-modules/tool/types/tool-output.type';
 import { type Tool } from 'src/engine/core-modules/tool/types/tool.type';
 import { PermissionsService } from 'src/engine/metadata-modules/permissions/permissions.service';
+import { SaveCampaignTool } from 'src/modules/emailing/tools/save-campaign-tool';
 
 @Injectable()
 export class ActionToolProvider implements ToolProvider {
@@ -43,11 +45,13 @@ export class ActionToolProvider implements ToolProvider {
     private readonly httpTool: HttpTool,
     private readonly sendEmailTool: SendEmailTool,
     private readonly draftEmailTool: DraftEmailTool,
+    private readonly createCalendarEventTool: CreateCalendarEventTool,
     private readonly searchHelpCenterTool: SearchHelpCenterTool,
     private readonly codeInterpreterTool: CodeInterpreterTool,
     private readonly navigateAppTool: NavigateAppTool,
     private readonly extractJsonPathsTool: ExtractJsonPathsTool,
     private readonly searchOutputTool: SearchOutputTool,
+    private readonly saveCampaignTool: SaveCampaignTool,
     private readonly codeInterpreterService: CodeInterpreterService,
     private readonly permissionsService: PermissionsService,
     private readonly i18nService: I18nService,
@@ -56,11 +60,13 @@ export class ActionToolProvider implements ToolProvider {
       ['http_request', this.httpTool],
       ['send_email', this.sendEmailTool],
       ['draft_email', this.draftEmailTool],
+      ['create_calendar_event', this.createCalendarEventTool],
       ['search_help_center', this.searchHelpCenterTool],
       ['code_interpreter', this.codeInterpreterTool],
       ['navigate_app', this.navigateAppTool],
       ['extract_json_paths', this.extractJsonPathsTool],
       ['search_output', this.searchOutputTool],
+      ['save_campaign', this.saveCampaignTool],
     ]);
   }
 
@@ -117,6 +123,24 @@ export class ActionToolProvider implements ToolProvider {
       );
     }
 
+    const hasCreateCalendarEventPermission =
+      await this.permissionsService.hasToolPermission(
+        context.rolePermissionConfig,
+        context.workspaceId,
+        PermissionFlagType.CREATE_CALENDAR_EVENT_TOOL,
+      );
+
+    if (hasCreateCalendarEventPermission) {
+      descriptors.push(
+        this.buildDescriptor(
+          'create_calendar_event',
+          this.createCalendarEventTool,
+          includeSchemas,
+          context.locale,
+        ),
+      );
+    }
+
     descriptors.push(
       this.buildDescriptor(
         'search_help_center',
@@ -148,6 +172,15 @@ export class ActionToolProvider implements ToolProvider {
         'search_output',
         this.searchOutputTool,
         includeSchemas,
+      ),
+    );
+
+    descriptors.push(
+      this.buildDescriptor(
+        'save_campaign',
+        this.saveCampaignTool,
+        includeSchemas,
+        context.locale,
       ),
     );
 

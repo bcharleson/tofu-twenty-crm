@@ -1,13 +1,14 @@
 import { Module } from '@nestjs/common';
 import { APP_FILTER, HttpAdapterHost } from '@nestjs/core';
-import { EventEmitterModule } from '@nestjs/event-emitter';
+import { EventEmitter2, EventEmitterModule } from '@nestjs/event-emitter';
 
 import { WorkspaceQueryRunnerModule } from 'src/engine/api/graphql/workspace-query-runner/workspace-query-runner.module';
 import { ActorModule } from 'src/engine/core-modules/actor/actor.module';
 import { AdminPanelModule } from 'src/engine/core-modules/admin-panel/admin-panel.module';
 import { ApiKeyModule } from 'src/engine/core-modules/api-key/api-key.module';
-import { AppTokenModule } from 'src/engine/core-modules/app-token/app-token.module';
+import { ApplicationAuthorizationModule } from 'src/engine/core-modules/application/application-authorization/application-authorization.module';
 import { ApplicationDevelopmentModule } from 'src/engine/core-modules/application/application-development/application-development.module';
+import { FrontComponentSharedDependenciesModule } from 'src/engine/core-modules/application/front-component-shared-dependencies/front-component-shared-dependencies.module';
 import { ApplicationInstallModule } from 'src/engine/core-modules/application/application-install/application-install.module';
 import { MarketplaceModule } from 'src/engine/core-modules/application/application-marketplace/marketplace.module';
 import { ApplicationOAuthModule } from 'src/engine/core-modules/application/application-oauth/application-oauth.module';
@@ -21,12 +22,14 @@ import { BillingWebhookModule } from 'src/engine/core-modules/billing-webhook/bi
 import { AppBillingModule } from 'src/engine/core-modules/billing/app-billing/app-billing.module';
 import { BillingModule } from 'src/engine/core-modules/billing/billing.module';
 import { BillingGraphqlApiExceptionFilter } from 'src/engine/core-modules/billing/filters/billing-graphql-api-exception.filter';
+import { PermissionsGraphqlApiExceptionFilter } from 'src/engine/metadata-modules/permissions/utils/permissions-graphql-api-exception.filter';
 import { CacheStorageModule } from 'src/engine/core-modules/cache-storage/cache-storage.module';
 import { TimelineCalendarEventModule } from 'src/engine/core-modules/calendar/timeline-calendar-event.module';
 import { CaptchaModule } from 'src/engine/core-modules/captcha/captcha.module';
 import { CloudflareModule } from 'src/engine/core-modules/cloudflare/cloudflare.module';
 import { CodeInterpreterModule } from 'src/engine/core-modules/code-interpreter/code-interpreter.module';
 import { DnsManagerModule } from 'src/engine/core-modules/dns-manager/dns-manager.module';
+import { DpaModule } from 'src/engine/core-modules/dpa/dpa.module';
 import { EmailModule } from 'src/engine/core-modules/email/email.module';
 import { EmailingDomainModule } from 'src/engine/core-modules/emailing-domain/emailing-domain.module';
 import { EmailingModule } from 'src/modules/emailing/emailing.module';
@@ -55,7 +58,8 @@ import { PublicDomainModule } from 'src/engine/core-modules/public-domain/public
 import { RedisClientModule } from 'src/engine/core-modules/redis-client/redis-client.module';
 import { RedisClientService } from 'src/engine/core-modules/redis-client/redis-client.service';
 import { SearchModule } from 'src/engine/core-modules/search/search.module';
-import { WorkspaceSSOModule } from 'src/engine/core-modules/sso/sso.module';
+import { WorkspaceSsoModule } from 'src/engine/core-modules/sso/sso.module';
+import { WellKnownModule } from 'src/engine/core-modules/well-known/well-known.module';
 import { TelemetryModule } from 'src/engine/core-modules/telemetry/telemetry.module';
 import { TwentyConfigModule } from 'src/engine/core-modules/twenty-config/twenty-config.module';
 import { TwentyConfigService } from 'src/engine/core-modules/twenty-config/twenty-config.service';
@@ -74,6 +78,8 @@ import { CodeInterpreterSessionCleanupModule } from 'src/engine/core-modules/cod
 import { TrashCleanupModule } from 'src/engine/trash-cleanup/trash-cleanup.module';
 import { WorkspaceEventEmitterModule } from 'src/engine/workspace-event-emitter/workspace-event-emitter.module';
 import { ChannelSyncModule } from 'src/modules/connected-account/channel-sync/channel-sync.module';
+import { CreateCalendarEventModule } from 'src/modules/calendar/calendar-event-creation-manager/create-calendar-event.module';
+import { CallRecordingModule } from 'src/modules/call-recording/call-recording.module';
 import { DashboardModule } from 'src/modules/dashboard/dashboard.module';
 import { SendEmailModule } from 'src/modules/messaging/message-outbound-manager/send-email.module';
 import { ClientConfigModule } from './client-config/client-config.module';
@@ -97,20 +103,22 @@ import { WorkspaceBrandingModule } from './workspace-branding/workspace-branding
     FileModule,
     RowLevelPermissionModule,
     OpenApiModule,
+    WellKnownModule,
     ApplicationRegistrationModule,
     ApplicationOAuthModule,
+    ApplicationAuthorizationModule,
     ApplicationModule,
     ApplicationInstallModule,
     ApplicationUpgradeModule,
     ApplicationDevelopmentModule,
+    FrontComponentSharedDependenciesModule,
     MarketplaceModule,
-    AppTokenModule,
     TimelineMessagingModule,
     TimelineCalendarEventModule,
     UserModule,
     WorkspaceModule,
     WorkspaceInvitationModule,
-    WorkspaceSSOModule,
+    WorkspaceSsoModule,
     ApprovedAccessDomainModule,
     EmailingDomainModule,
     EmailingModule,
@@ -131,6 +139,8 @@ import { WorkspaceBrandingModule } from './workspace-branding/workspace-branding
     ImapSmtpCaldavModule,
     ChannelSyncModule,
     SendEmailModule,
+    CreateCalendarEventModule,
+    CallRecordingModule,
     FileStorageModule.forRoot(),
     LoggerModule.forRootAsync({
       useFactory: loggerModuleFactory,
@@ -139,7 +149,12 @@ import { WorkspaceBrandingModule } from './workspace-branding/workspace-branding
     MetricsModule,
     MessageQueueModule.registerAsync({
       useFactory: messageQueueModuleFactory,
-      inject: [TwentyConfigService, RedisClientService, MetricsService],
+      inject: [
+        TwentyConfigService,
+        RedisClientService,
+        MetricsService,
+        EventEmitter2,
+      ],
     }),
     ExceptionHandlerModule.forRootAsync({
       useFactory: exceptionHandlerModuleFactory,
@@ -157,6 +172,7 @@ import { WorkspaceBrandingModule } from './workspace-branding/workspace-branding
     CodeInterpreterModule.forRoot(),
     SearchModule,
     ApiKeyModule,
+    DpaModule,
     PageLayoutModule,
     ImpersonationModule,
     TrashCleanupModule,
@@ -172,6 +188,10 @@ import { WorkspaceBrandingModule } from './workspace-branding/workspace-branding
       provide: APP_FILTER,
       useClass: BillingGraphqlApiExceptionFilter,
     },
+    {
+      provide: APP_FILTER,
+      useClass: PermissionsGraphqlApiExceptionFilter,
+    },
   ],
   exports: [
     EventLogsViewerModule,
@@ -182,7 +202,7 @@ import { WorkspaceBrandingModule } from './workspace-branding/workspace-branding
     UserModule,
     WorkspaceModule,
     WorkspaceInvitationModule,
-    WorkspaceSSOModule,
+    WorkspaceSsoModule,
     ImapSmtpCaldavModule,
   ],
 })

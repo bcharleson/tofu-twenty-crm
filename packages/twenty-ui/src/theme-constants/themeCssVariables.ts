@@ -1,5 +1,5 @@
-// Theme CSS variable accessor, mirrored token-for-token from twenty-ui.
-// Kept in sync by the theme parity test (src/theme-constants/__tests__).
+// Generated from design-tokens by scripts/generateThemeTokens.ts.
+// Do not edit manually. Regenerate with: npx nx generateTokens twenty-ui.
 export const themeCssVariables = {
   icon: {
     size: {
@@ -174,6 +174,9 @@ export const themeCssVariables = {
       xs: 'var(--t-border-radius-xs)',
       sm: 'var(--t-border-radius-sm)',
       md: 'var(--t-border-radius-md)',
+      smRound: 'var(--t-border-radius-sm-round)',
+      mdRound: 'var(--t-border-radius-md-round)',
+      lg: 'var(--t-border-radius-lg)',
       xl: 'var(--t-border-radius-xl)',
       xxl: 'var(--t-border-radius-xxl)',
       pill: 'var(--t-border-radius-pill)',
@@ -316,12 +319,12 @@ export const themeCssVariables = {
   },
   IllustrationIcon: {
     color: {
-      blue: 'var(--t--illustration-icon-color-blue)',
-      gray: 'var(--t--illustration-icon-color-gray)',
+      blue: 'var(--t-illustration-icon-color-blue)',
+      gray: 'var(--t-illustration-icon-color-gray)',
     },
     fill: {
-      blue: 'var(--t--illustration-icon-fill-blue)',
-      gray: 'var(--t--illustration-icon-fill-gray)',
+      blue: 'var(--t-illustration-icon-fill-blue)',
+      gray: 'var(--t-illustration-icon-fill-gray)',
     },
   },
   grayScale: {

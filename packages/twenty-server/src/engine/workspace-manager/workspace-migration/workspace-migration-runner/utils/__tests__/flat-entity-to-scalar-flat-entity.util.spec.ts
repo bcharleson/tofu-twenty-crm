@@ -24,7 +24,7 @@ describe('flatEntityToScalarFlatEntity', () => {
       label: 'Test Label',
       name: 'testField',
       options: null,
-      standardOverrides: null,
+      overrides: null,
       settings: null,
       universalSettings: null,
       isSystem: false,
@@ -66,14 +66,15 @@ describe('flatEntityToScalarFlatEntity', () => {
   "name": "testField",
   "objectMetadataId": "object-metadata-id",
   "options": null,
+  "overrides": null,
   "relationTargetFieldMetadataId": "relation-target-field-id",
   "relationTargetObjectMetadataId": "relation-target-object-id",
   "settings": null,
-  "standardOverrides": null,
   "type": "TEXT",
   "universalIdentifier": "universal-identifier",
   "updatedAt": "2025-01-01T00:00:00.000Z",
   "workspaceId": "workspace-id",
+  "writability": "OPEN",
 }
 `);
   });

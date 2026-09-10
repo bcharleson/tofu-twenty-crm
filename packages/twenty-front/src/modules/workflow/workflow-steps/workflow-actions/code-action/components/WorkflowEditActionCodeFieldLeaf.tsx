@@ -1,4 +1,5 @@
 import { useObjectMetadataItems } from '@/object-metadata/hooks/useObjectMetadataItems';
+import { FormArrayFieldInput } from '@/object-record/record-field/ui/form-types/components/FormArrayFieldInput';
 import { FormBooleanFieldInput } from '@/object-record/record-field/ui/form-types/components/FormBooleanFieldInput';
 import { FormMultiRecordPicker } from '@/object-record/record-field/ui/form-types/components/FormMultiRecordPicker';
 import { FormNumberFieldInput } from '@/object-record/record-field/ui/form-types/components/FormNumberFieldInput';
@@ -6,7 +7,7 @@ import { FormSelectFieldInput } from '@/object-record/record-field/ui/form-types
 import { FormSingleRecordPicker } from '@/object-record/record-field/ui/form-types/components/FormSingleRecordPicker';
 import { FormTextFieldInput } from '@/object-record/record-field/ui/form-types/components/FormTextFieldInput';
 import { type VariablePickerComponent } from '@/object-record/record-field/ui/form-types/types/VariablePickerComponent';
-import { isStandaloneVariableString } from '@/workflow/utils/isStandaloneVariableString';
+import { type FieldArrayValue } from '@/object-record/record-field/ui/types/FieldMetadata';
 import { getWorkflowCodeFieldsEnumSelectOptions } from '@/workflow/workflow-steps/workflow-actions/code-action/utils/getWorkflowCodeFieldsEnumSelectOptions';
 import { getWorkflowCodeFieldsLeafKind } from '@/workflow/workflow-steps/workflow-actions/code-action/utils/getWorkflowCodeFieldsLeafKind';
 import { t } from '@lingui/core/macro';
@@ -19,7 +20,10 @@ import {
   isString,
 } from '@sniptt/guards';
 import { isDefined } from 'twenty-shared/utils';
-import { type InputSchemaProperty } from 'twenty-shared/workflow';
+import {
+  type InputSchemaProperty,
+  isStandaloneVariableString,
+} from 'twenty-shared/workflow';
 
 type WorkflowEditActionCodeFieldLeafProps = {
   label: string;
@@ -87,6 +91,22 @@ export const WorkflowEditActionCodeFieldLeaf = ({
         />
       );
     }
+  }
+
+  if (leafKind === 'array') {
+    return (
+      <FormArrayFieldInput
+        label={label}
+        defaultValue={
+          Array.isArray(inputValue) || isStandaloneVariableString(inputValue)
+            ? (inputValue as FieldArrayValue | string)
+            : undefined
+        }
+        onChange={onChange}
+        readonly={readonly}
+        VariablePicker={VariablePicker}
+      />
+    );
   }
 
   if (leafKind === 'boolean') {

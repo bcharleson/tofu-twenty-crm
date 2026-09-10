@@ -2,12 +2,8 @@ import { initOpenNextCloudflareForDev } from '@opennextjs/cloudflare';
 import withLinaria, { type LinariaConfig } from 'next-with-linaria';
 import path from 'path';
 
-import { localeToUrlSegment } from './src/platform/i18n/locale-to-url-segment';
 import { WEBSITE_LOCALE_LIST } from './src/platform/i18n/website-locale-list';
 import { buildLocaleRewrites } from './src/platform/routing/locale-rewrite-patterns';
-
-const DEPLOYED_LOCALE_URL_SEGMENTS =
-  WEBSITE_LOCALE_LIST.map(localeToUrlSegment);
 
 const SECURITY_HEADERS: { key: string; value: string }[] = [
   {
@@ -87,7 +83,7 @@ const nextConfig: LinariaConfig = {
   // tree; redirects canonicalize away explicit source-locale prefixes.
   async rewrites() {
     return {
-      beforeFiles: buildLocaleRewrites(DEPLOYED_LOCALE_URL_SEGMENTS),
+      beforeFiles: buildLocaleRewrites(WEBSITE_LOCALE_LIST),
     };
   },
   async redirects() {
@@ -123,6 +119,15 @@ const nextConfig: LinariaConfig = {
       // Strip the source-locale prefix: /en/foo → /foo (301).
       { source: '/en', destination: '/', statusCode: 301 },
       { source: '/en/:path*', destination: '/:path*', statusCode: 301 },
+      // /partners/list folded into the lead page, whose directory zone is the
+      // same grid. Both the unprefixed and the locale-prefixed URLs were in the
+      // sitemap, so both need the 308.
+      { source: '/partners/list', destination: '/partners', permanent: true },
+      {
+        source: `/:locale(${WEBSITE_LOCALE_LIST.join('|')})/partners/list`,
+        destination: '/:locale/partners',
+        permanent: true,
+      },
       {
         source: '/user-guide',
         destination: 'https://docs.twenty.com/user-guide/introduction',

@@ -5,6 +5,7 @@ import { getSettingsPath, isDefined } from 'twenty-shared/utils';
 import { SettingsPath } from 'twenty-shared/types';
 import { useLingui } from '@lingui/react/macro';
 import { SettingsPageLayout } from '@/settings/components/layout/SettingsPageLayout';
+import { SettingsTabBar } from '@/settings/components/layout/SettingsTabBar';
 import { useApolloAdminClient } from '@/settings/admin-panel/apollo/hooks/useApolloAdminClient';
 import { APPLICATION_REGISTRATION_ADMIN_PATH } from '@/settings/admin-panel/apps/constants/ApplicationRegistrationAdminPath';
 import { SettingsPageContainer } from '@/settings/components/SettingsPageContainer';
@@ -20,20 +21,11 @@ import { SettingsApplicationRegistrationConfigTab } from '~/pages/settings/appli
 import { SettingsApplicationRegistrationOAuthTab } from '~/pages/settings/applications/tabs/SettingsApplicationRegistrationOAuthTab';
 import { SettingsApplicationRegistrationDistributionTab } from '~/pages/settings/applications/tabs/SettingsApplicationRegistrationDistributionTab';
 import { SettingsApplicationRegistrationGeneralTab } from '~/pages/settings/applications/tabs/SettingsApplicationRegistrationGeneralTab';
-import { TabList } from '@/ui/layout/tab-list/components/TabList';
 import { useAtomComponentStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomComponentStateValue';
 import { activeTabIdComponentState } from '@/ui/layout/tab-list/states/activeTabIdComponentState';
-import { themeCssVariables } from 'twenty-ui/theme-constants';
-import { styled } from '@linaria/react';
 
 const REGISTRATION_DETAIL_TAB_LIST_ID =
   'admin-application-registration-detail-tab-list';
-
-const StyledTitleContainer = styled.div`
-  align-items: center;
-  display: flex;
-  gap: ${themeCssVariables.spacing[2]};
-`;
 
 export const SettingsAdminApplicationRegistrationDetail = () => {
   const { t } = useLingui();
@@ -89,6 +81,7 @@ export const SettingsAdminApplicationRegistrationDetail = () => {
         return (
           <SettingsApplicationRegistrationDistributionTab
             registration={registration}
+            fromAdmin
           />
         );
       case 'general':
@@ -104,17 +97,15 @@ export const SettingsAdminApplicationRegistrationDetail = () => {
 
   return (
     <SettingsPageLayout
-      title={
-        <StyledTitleContainer>
-          <Avatar
-            type="app"
-            size="md"
-            avatarUrl={getAbsoluteImageUrl(registration.logoUrl ?? undefined)}
-            placeholder={registration.name}
-            placeholderColorSeed={registration.name}
-          />
-          {registration.name}
-        </StyledTitleContainer>
+      title={registration.name}
+      icon={
+        <Avatar
+          type="app"
+          size="md"
+          avatarUrl={getAbsoluteImageUrl(registration.logoUrl ?? undefined)}
+          placeholder={registration.name}
+          placeholderColorSeed={registration.name}
+        />
       }
       links={[
         {
@@ -127,14 +118,14 @@ export const SettingsAdminApplicationRegistrationDetail = () => {
         },
         { children: registration.name },
       ]}
-    >
-      <SettingsPageContainer>
-        <TabList
+      secondaryBar={
+        <SettingsTabBar
           tabs={tabs}
           componentInstanceId={REGISTRATION_DETAIL_TAB_LIST_ID}
         />
-        {renderActiveTabContent()}
-      </SettingsPageContainer>
+      }
+    >
+      <SettingsPageContainer>{renderActiveTabContent()}</SettingsPageContainer>
     </SettingsPageLayout>
   );
 };

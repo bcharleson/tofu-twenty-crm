@@ -1,5 +1,7 @@
 import { useNavigationDrawerExpanded } from '@/navigation/hooks/useNavigationDrawerExpanded';
 import { SIDE_PANEL_TOP_BAR_HEIGHT } from '@/side-panel/constants/SidePanelTopBarHeight';
+import { useWorkspaceSurface } from '@/ui/layout/hooks/useWorkspaceSurface';
+import { useWorkspaceSurfaceHeaderPortal } from '@/ui/layout/hooks/useWorkspaceSurfaceHeaderPortal';
 import {
   Breadcrumb,
   type BreadcrumbProps,
@@ -9,6 +11,7 @@ import { NavigationDrawerCollapseButton } from '@/ui/navigation/navigation-drawe
 import { useIsMobile } from '@/ui/utilities/responsive/hooks/useIsMobile';
 import { styled } from '@linaria/react';
 import { type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { isDefined } from 'twenty-shared/utils';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
 
@@ -23,16 +26,19 @@ type PageCardHeaderProps = {
   titleColor?: string;
 };
 
-const StyledHeader = styled.div`
+const StyledHeader = styled.div<{ centerTitle?: boolean }>`
   align-items: center;
   background-color: ${themeCssVariables.background.secondary};
   border-bottom: 1px solid ${themeCssVariables.border.color.medium};
   box-sizing: border-box;
-  display: flex;
-  gap: ${themeCssVariables.spacing[2]};
+  column-gap: ${themeCssVariables.spacing[2]};
+  display: grid;
+  grid-template-columns: ${({ centerTitle }) =>
+    centerTitle
+      ? 'minmax(0, 1fr) minmax(0, auto) minmax(0, 1fr)'
+      : 'minmax(0, auto) minmax(min-content, 1fr)'};
   min-height: ${SIDE_PANEL_TOP_BAR_HEIGHT}px;
   padding: 0 ${themeCssVariables.spacing[3]};
-  position: relative;
   width: 100%;
 `;
 
@@ -40,8 +46,10 @@ const StyledLeft = styled.div`
   align-items: center;
   display: flex;
   gap: ${themeCssVariables.spacing[2]};
+  grid-column: 1;
   min-width: 0;
   overflow: hidden;
+  width: 100%;
 `;
 
 const StyledTitle = styled.div<{ titleColor?: string }>`
@@ -51,26 +59,39 @@ const StyledTitle = styled.div<{ titleColor?: string }>`
   display: flex;
   font-size: ${themeCssVariables.font.size.md};
   font-weight: ${themeCssVariables.font.weight.semiBold};
-  gap: ${themeCssVariables.spacing[2]};
+  gap: ${themeCssVariables.spacing[1]};
   min-width: 0;
 `;
 
 const StyledCenteredTitle = styled(StyledTitle)`
-  bottom: 0;
+  grid-column: 2;
   justify-content: center;
-  left: 50%;
-  position: absolute;
-  top: 0;
-  transform: translateX(-50%);
+  justify-self: stretch;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
 `;
 
-const StyledRight = styled.div`
+const StyledRight = styled.div<{ centerTitle?: boolean }>`
   align-items: center;
   display: flex;
-  flex: 1;
   gap: ${themeCssVariables.spacing[2]};
+  grid-column: ${({ centerTitle }) => (centerTitle ? 3 : 2)};
   justify-content: flex-end;
-  min-width: 0;
+  justify-self: end;
+  width: 100%;
+`;
+
+const StyledSurfaceTitle = styled(StyledTitle)`
+  overflow: hidden;
+  width: 100%;
+`;
+
+const StyledSurfaceActions = styled.div`
+  align-items: center;
+  display: flex;
+  flex-shrink: 0;
+  gap: ${themeCssVariables.spacing[2]};
 `;
 
 export const PageCardHeader = ({
@@ -85,9 +106,11 @@ export const PageCardHeader = ({
 }: PageCardHeaderProps) => {
   const isMobile = useIsMobile();
   const isNavigationDrawerExpanded = useNavigationDrawerExpanded();
+  const workspaceSurface = useWorkspaceSurface();
+  const workspaceSurfaceHeaderPortal = useWorkspaceSurfaceHeaderPortal();
 
-  const hasTitleContent =
-    !isMobile && (isDefined(icon) || isDefined(title) || isDefined(tag));
+  const hasTitleContent = isDefined(icon) || isDefined(title) || isDefined(tag);
+  const shouldCenterTitle = centerTitle && hasTitleContent;
 
   const titleContent = (
     <>
@@ -97,25 +120,59 @@ export const PageCardHeader = ({
     </>
   );
 
+  const surfaceTitleContent = isDefined(breadcrumb) ? (
+    breadcrumb
+  ) : hasTitleContent ? (
+    titleContent
+  ) : isDefined(links) ? (
+    <Breadcrumb links={links} />
+  ) : null;
+
+  if (workspaceSurface.type === 'side-panel') {
+    return (
+      <>
+        {isDefined(workspaceSurfaceHeaderPortal.title) &&
+          isDefined(surfaceTitleContent) &&
+          createPortal(
+            <StyledSurfaceTitle titleColor={titleColor}>
+              {surfaceTitleContent}
+            </StyledSurfaceTitle>,
+            workspaceSurfaceHeaderPortal.title,
+          )}
+        {isDefined(workspaceSurfaceHeaderPortal.actions) &&
+          isDefined(actionButton) &&
+          createPortal(
+            <StyledSurfaceActions
+              data-click-outside-id={PAGE_ACTION_CONTAINER_CLICK_OUTSIDE_ID}
+            >
+              {actionButton}
+            </StyledSurfaceActions>,
+            workspaceSurfaceHeaderPortal.actions,
+          )}
+      </>
+    );
+  }
+
   return (
-    <StyledHeader>
+    <StyledHeader centerTitle={shouldCenterTitle}>
       <StyledLeft>
-        {!isNavigationDrawerExpanded && (
+        {!isMobile && !isNavigationDrawerExpanded && (
           <NavigationDrawerCollapseButton direction="right" />
         )}
         {isDefined(breadcrumb)
           ? breadcrumb
           : isDefined(links) && <Breadcrumb links={links} />}
-        {!centerTitle && hasTitleContent && (
+        {!shouldCenterTitle && hasTitleContent && (
           <StyledTitle titleColor={titleColor}>{titleContent}</StyledTitle>
         )}
       </StyledLeft>
-      {centerTitle && hasTitleContent && (
+      {shouldCenterTitle && (
         <StyledCenteredTitle titleColor={titleColor}>
           {titleContent}
         </StyledCenteredTitle>
       )}
       <StyledRight
+        centerTitle={shouldCenterTitle}
         data-click-outside-id={PAGE_ACTION_CONTAINER_CLICK_OUTSIDE_ID}
       >
         {actionButton}

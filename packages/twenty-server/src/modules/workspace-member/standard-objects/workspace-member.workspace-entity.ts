@@ -55,9 +55,12 @@ export class WorkspaceMemberWorkspaceEntity extends BaseWorkspaceEntity {
   position: number;
   name: FullNameMetadata;
   colorScheme: string;
+  uiScale: string;
+  openRecordIn: string;
   locale: keyof typeof APP_LOCALES;
   avatarUrl: string | null;
   userEmail: string | null;
+  jobTitle: string | null;
   calendarStartDay: number;
   userId: string;
   timeZone: string;

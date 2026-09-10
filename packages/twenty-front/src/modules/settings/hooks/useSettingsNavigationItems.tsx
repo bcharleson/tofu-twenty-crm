@@ -16,18 +16,19 @@ import { useIsFeatureEnabled } from '@/workspace/hooks/useIsFeatureEnabled';
 import { t } from '@lingui/core/macro';
 import { isNonEmptyString } from '@sniptt/guards';
 import {
-  IconApi,
+  IconAppWindow,
+  IconApps,
   IconAt,
   IconCalendarEvent,
   IconColorSwatch,
   type IconComponent,
-  IconCurrencyDollar,
+  IconCreditCard,
   IconDoorEnter,
   IconHelpCircle,
-  IconHierarchy2,
-  IconLayout,
+  IconHierarchy,
   IconMail,
   IconMessage,
+  IconMessageCircle,
   IconPlug,
   IconServer,
   IconSettings,
@@ -125,13 +126,13 @@ const useSettingsNavigationItems = (): SettingsNavigationSection[] => {
         {
           label: t`Data model`,
           path: SettingsPath.Objects,
-          Icon: IconHierarchy2,
+          Icon: IconHierarchy,
           isHidden: !permissionMap[PermissionFlagType.DATA_MODEL],
         },
         {
           label: t`Layout`,
           path: SettingsPath.Layout,
-          Icon: IconLayout,
+          Icon: IconAppWindow,
           isHidden: !permissionMap[PermissionFlagType.LAYOUTS],
         },
         {
@@ -143,14 +144,14 @@ const useSettingsNavigationItems = (): SettingsNavigationSection[] => {
         {
           label: t`Billing`,
           path: SettingsPath.Billing,
-          Icon: IconCurrencyDollar,
+          Icon: IconCreditCard,
           isHidden:
             !isBillingEnabled || !permissionMap[PermissionFlagType.WORKSPACE],
         },
         {
-          label: t`APIs & Webhooks`,
+          label: t`MCP & APIs`,
           path: SettingsPath.ApiWebhooks,
-          Icon: IconApi,
+          Icon: IconPlug,
           isHidden: !permissionMap[PermissionFlagType.API_KEYS_AND_WEBHOOKS],
         },
         // TODO: Re-enable when integrations page is ready
@@ -163,7 +164,7 @@ const useSettingsNavigationItems = (): SettingsNavigationSection[] => {
         {
           label: t`Apps`,
           path: SettingsPath.Applications,
-          Icon: IconPlug,
+          Icon: IconApps,
           isHidden: !permissionMap[PermissionFlagType.APPLICATIONS],
         },
         {
@@ -173,9 +174,9 @@ const useSettingsNavigationItems = (): SettingsNavigationSection[] => {
           isHidden: !permissionMap[PermissionFlagType.AI_SETTINGS],
         },
         {
-          label: t`Email`,
-          path: SettingsPath.WorkspaceEmail,
-          Icon: IconMail,
+          label: t`Communication`,
+          path: SettingsPath.WorkspaceCommunications,
+          Icon: IconMessageCircle,
           isHidden:
             !isEmailGroupFeatureEnabled ||
             !permissionMap[PermissionFlagType.WORKSPACE],

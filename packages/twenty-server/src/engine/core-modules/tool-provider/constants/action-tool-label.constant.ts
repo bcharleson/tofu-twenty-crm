@@ -7,9 +7,11 @@ export const ACTION_TOOL_IDS = [
   'http_request',
   'send_email',
   'draft_email',
+  'create_calendar_event',
   'search_help_center',
   'code_interpreter',
   'navigate_app',
+  'save_campaign',
 ] as const;
 
 export type ActionToolId = (typeof ACTION_TOOL_IDS)[number];
@@ -24,6 +26,9 @@ export const ACTION_TOOL_LABELS: Record<ActionToolId, ActionToolLabel> = {
   draft_email: {
     label: i18nLabel(msg`Draft Email`),
   },
+  create_calendar_event: {
+    label: i18nLabel(msg`Create Calendar Event`),
+  },
   search_help_center: {
     label: i18nLabel(msg`Search Help Center`),
   },
@@ -32,5 +37,8 @@ export const ACTION_TOOL_LABELS: Record<ActionToolId, ActionToolLabel> = {
   },
   navigate_app: {
     label: i18nLabel(msg`Navigate App`),
+  },
+  save_campaign: {
+    label: i18nLabel(msg`Save Campaign`),
   },
 };

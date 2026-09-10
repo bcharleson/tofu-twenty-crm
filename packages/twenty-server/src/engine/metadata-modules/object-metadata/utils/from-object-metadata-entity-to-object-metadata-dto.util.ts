@@ -15,7 +15,7 @@ export const fromObjectMetadataEntityToObjectMetadataDto = (
   icon: entity.icon ?? undefined,
   color: entity.color ?? undefined,
   shortcut: entity.shortcut ?? undefined,
-  standardOverrides: entity.standardOverrides ?? undefined,
+  overrides: entity.overrides ?? undefined,
   isRemote: entity.isRemote,
   isActive: entity.isActive,
   isSystem: entity.isSystem,
@@ -23,6 +23,9 @@ export const fromObjectMetadataEntityToObjectMetadataDto = (
   isUICreatable: entity.isUICreatable,
   isUIReadOnly: !entity.isUIEditable,
   isSearchable: entity.isSearchable,
+  openRecordIn: entity.openRecordIn,
+  readability: entity.readability,
+  writability: entity.writability,
   isLabelSyncedWithName: entity.isLabelSyncedWithName,
   workspaceId: entity.workspaceId,
   labelIdentifierFieldMetadataId:

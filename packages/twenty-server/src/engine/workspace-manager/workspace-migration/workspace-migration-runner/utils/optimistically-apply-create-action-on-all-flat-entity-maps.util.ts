@@ -47,6 +47,18 @@ export const optimisticallyApplyCreateActionOnAllFlatEntityMaps = ({
 
       return allFlatEntityMaps;
     }
+    case 'searchFieldMetadata': {
+      addFlatEntityToFlatEntityAndRelatedEntityMapsThroughMutationOrThrow({
+        flatEntity: flatAction.flatEntity,
+        flatEntityAndRelatedMapsToMutate: allFlatEntityMaps,
+        metadataName: flatAction.metadataName,
+        // searchFieldMetadata is created before its parent object/fields, which
+        // therefore aren't in the maps yet to back-link to.
+        skipMissingRelatedEntities: true,
+      });
+
+      return allFlatEntityMaps;
+    }
     case 'view':
     case 'viewField':
     case 'viewGroup':
@@ -75,7 +87,7 @@ export const optimisticallyApplyCreateActionOnAllFlatEntityMaps = ({
     case 'webhook':
     case 'applicationVariable':
     case 'connectionProvider':
-    case 'searchFieldMetadata': {
+    case 'timelineActivityType': {
       addFlatEntityToFlatEntityAndRelatedEntityMapsThroughMutationOrThrow({
         flatEntity: flatAction.flatEntity,
         flatEntityAndRelatedMapsToMutate: allFlatEntityMaps,

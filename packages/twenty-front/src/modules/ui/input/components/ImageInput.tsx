@@ -20,7 +20,7 @@ const StyledPicture = styled.button<{ withPicture: boolean }>`
       ? themeCssVariables.background.secondary
       : themeCssVariables.background.transparent.light};
   border: 1px solid ${themeCssVariables.border.color.medium};
-  border-radius: ${themeCssVariables.border.radius.sm};
+  border-radius: ${themeCssVariables.border.radius.md};
   box-sizing: content-box;
   color: ${themeCssVariables.font.color.light};
   cursor: ${({ disabled }) => (disabled ? 'not-allowed' : 'pointer')};
@@ -110,7 +110,7 @@ export const ImageInput = ({
   const onUploadButtonClick = () => {
     hiddenFileInput.current?.click();
   };
-  const [isPictureURLError, setIsPictureURLError] = useState(false);
+  const [isPictureUrlError, setIsPictureUrlError] = useState(false);
 
   const pictureURI = isNonEmptyString(picture)
     ? getImageAbsoluteURI({
@@ -130,13 +130,13 @@ export const ImageInput = ({
         disabled={disabled}
         onClick={onUploadButtonClick}
       >
-        {pictureURI && !isPictureURLError ? (
+        {pictureURI && !isPictureUrlError ? (
           <img
             key={pictureURI}
             src={pictureURI}
             alt="profile"
             onError={() => {
-              setIsPictureURLError(true);
+              setIsPictureUrlError(true);
             }}
           />
         ) : (

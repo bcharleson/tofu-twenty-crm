@@ -11,8 +11,9 @@ export const APPLICATION_FRAGMENT = gql`
     id
     name
     description
-    logo
+    logoUrl
     version
+    state
     universalIdentifier
     applicationRegistrationId
     applicationRegistration {
@@ -22,6 +23,7 @@ export const APPLICATION_FRAGMENT = gql`
       logoUrl
     }
     canBeUninstalled
+    autoUpgrade
     defaultRoleId
     settingsCustomTabFrontComponentId
     availablePackages
@@ -30,7 +32,11 @@ export const APPLICATION_FRAGMENT = gql`
       key
       value
       description
+      label
       isSecret
+      isDeprecated
+      type
+      options
     }
     agents {
       ...AgentFields
@@ -45,6 +51,7 @@ export const APPLICATION_FRAGMENT = gql`
       universalIdentifier
       isHeadless
       usesSdkClient
+      frontComponentSharedDependenciesChecksum
       createdAt
       updatedAt
     }

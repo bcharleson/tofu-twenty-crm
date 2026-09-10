@@ -2,10 +2,12 @@ import { Test, type TestingModule } from '@nestjs/testing';
 import { getDataSourceToken, getRepositoryToken } from '@nestjs/typeorm';
 
 import { config } from 'dotenv';
-import { DataSource, type Repository } from 'typeorm';
 import { WorkspaceActivationStatus } from 'twenty-shared/workspace';
+import { DataSource, type Repository } from 'typeorm';
 
+import { CommandShutdownService } from 'src/database/commands/command-runners/command-shutdown.service';
 import { WorkspaceIteratorService } from 'src/database/commands/command-runners/workspace-iterator.service';
+import { CoreEntityCacheService } from 'src/engine/core-entity-cache/services/core-entity-cache.service';
 import { ApplicationEntity } from 'src/engine/core-modules/application/application.entity';
 import { TwentyConfigService } from 'src/engine/core-modules/twenty-config/twenty-config.service';
 import { InstanceCommandRunnerService } from 'src/engine/core-modules/upgrade/services/instance-command-runner.service';
@@ -16,10 +18,12 @@ import {
   type WorkspaceUpgradeStep,
 } from 'src/engine/core-modules/upgrade/services/upgrade-sequence-reader.service';
 import { UpgradeSequenceRunnerService } from 'src/engine/core-modules/upgrade/services/upgrade-sequence-runner.service';
-import { UpgradeAwareEntityMetadataAdapter } from 'src/engine/twenty-orm/upgrade-aware/upgrade-aware-entity-metadata.adapter';
+import { UpgradeStatusCacheService } from 'src/engine/core-modules/upgrade/services/upgrade-status-cache.service';
 import { UpgradeStatusService } from 'src/engine/core-modules/upgrade/services/upgrade-status.service';
 import { WorkspaceCommandRunnerService } from 'src/engine/core-modules/upgrade/services/workspace-command-runner.service';
 import { UpgradeMigrationEntity } from 'src/engine/core-modules/upgrade/upgrade-migration.entity';
+import { WorkspaceEntity } from 'src/engine/core-modules/workspace/workspace.entity';
+import { UpgradeAwareEntityMetadataAdapter } from 'src/engine/twenty-orm/upgrade-aware/upgrade-aware-entity-metadata.adapter';
 import {
   SEED_APPLE_WORKSPACE_ID,
   SEED_EMPTY_WORKSPACE_3_ID,
@@ -109,9 +113,12 @@ const EXECUTED_BY_VERSION = '42.42.42';
 
 const noopAsync = async () => {};
 
+const DEFAULT_STEP_VERSION = '1.21.0';
+
 export const makeStep = (
   kind: UpgradeStep['kind'],
   name: string,
+  version: string = DEFAULT_STEP_VERSION,
 ): UpgradeStep => {
   const command =
     kind === 'workspace'
@@ -124,19 +131,26 @@ export const makeStep = (
     kind,
     name,
     command,
-    version: '1.21.0',
+    version,
     timestamp: 0,
   } as unknown as UpgradeStep;
 };
 
-export const makeFastInstance = (name: string) =>
-  makeStep('fast-instance', name);
+export const makeFastInstance = (name: string, version?: string) =>
+  makeStep('fast-instance', name, version);
 
-export const makeSlowInstance = (name: string) =>
-  makeStep('slow-instance', name);
+export const makeSlowInstance = (name: string, version?: string) =>
+  makeStep('slow-instance', name, version);
 
-export const makeWorkspace = (name: string) =>
-  makeStep('workspace', name) as WorkspaceUpgradeStep;
+export const makeWorkspace = (name: string, version?: string) =>
+  makeStep('workspace', name, version) as WorkspaceUpgradeStep;
+
+// Steps the status service can resolve a version from: it reads the version
+// off the command name, not off the step's `version` field.
+export const makeVersionedStep = (
+  kind: UpgradeStep['kind'],
+  { version, label }: { version: string; label: string },
+): UpgradeStep => makeStep(kind, `${version}_${label}_0`, version);
 
 let mockActiveWorkspaceIds: string[] = [];
 
@@ -200,10 +214,10 @@ export const createUpgradeSequenceRunnerIntegrationTestModule = async () => {
       {
         provide: WorkspaceVersionService,
         useValue: {
-          getActiveOrSuspendedWorkspaceIds: jest
+          getProvisionedWorkspaceIds: jest
             .fn()
             .mockImplementation(async () => mockActiveWorkspaceIds),
-          hasActiveOrSuspendedWorkspaces: jest
+          hasProvisionedWorkspaces: jest
             .fn()
             .mockImplementation(async () => mockActiveWorkspaceIds.length > 0),
         },
@@ -213,13 +227,25 @@ export const createUpgradeSequenceRunnerIntegrationTestModule = async () => {
         useFactory: () => new UpgradeSequenceReaderService({} as any),
       },
       {
-        provide: UpgradeStatusService,
+        provide: getRepositoryToken(WorkspaceEntity),
+        useValue: dataSource.getRepository(WorkspaceEntity),
+      },
+      {
+        provide: UpgradeStatusCacheService,
         useValue: {
-          invalidateInstanceAndAllWorkspacesStatus: jest
-            .fn()
-            .mockResolvedValue(undefined),
+          getComputedAt: jest.fn().mockResolvedValue(null),
+          getBehindWorkspaceIds: jest.fn().mockResolvedValue([]),
+          getFailedWorkspaceIds: jest.fn().mockResolvedValue([]),
+          getUpToDateWorkspaceCount: jest.fn().mockResolvedValue(0),
+          write: jest.fn().mockResolvedValue(undefined),
+          invalidate: jest.fn().mockResolvedValue(undefined),
         },
       },
+      {
+        provide: CoreEntityCacheService,
+        useValue: { get: jest.fn().mockResolvedValue(null) },
+      },
+      UpgradeStatusService,
       InstanceCommandRunnerService,
       WorkspaceCommandRunnerService,
       {
@@ -228,7 +254,11 @@ export const createUpgradeSequenceRunnerIntegrationTestModule = async () => {
           iterate: jest.fn().mockImplementation(async (args: any) => {
             const { callback, workspaceIds } = args;
             const ids = workspaceIds ?? [WS_1];
-            const report = { fail: [] as any[], success: [] as any[] };
+            const report = {
+              fail: [] as any[],
+              success: [] as any[],
+              interrupted: false,
+            };
 
             for (const [index, workspaceId] of ids.entries()) {
               try {
@@ -256,6 +286,7 @@ export const createUpgradeSequenceRunnerIntegrationTestModule = async () => {
           getHiddenColumnPropertyNames: jest.fn().mockReturnValue(new Set()),
         },
       },
+      CommandShutdownService,
       UpgradeSequenceRunnerService,
     ],
   }).compile();
@@ -290,6 +321,8 @@ export const createUpgradeSequenceRunnerIntegrationTestModule = async () => {
     module,
     dataSource,
     runner,
+    upgradeStatusService: module.get(UpgradeStatusService),
+    upgradeSequenceReaderService: module.get(UpgradeSequenceReaderService),
   };
 };
 
@@ -396,6 +429,57 @@ export const seedWorkspaceMigration = async (
       ],
     );
   }
+};
+
+export const snapshotUpgradeMigrations = async (
+  dataSource: DataSource,
+): Promise<UpgradeMigrationEntity[]> =>
+  dataSource.query(
+    `SELECT id, name, status, attempt, "executedByVersion", "errorMessage", "isInitial", "workspaceId", "createdAt"
+     FROM core."upgradeMigration"`,
+  );
+
+export const restoreUpgradeMigrations = async (
+  dataSource: DataSource,
+  rows: UpgradeMigrationEntity[],
+): Promise<void> => {
+  await dataSource.query('DELETE FROM core."upgradeMigration"');
+
+  if (rows.length === 0) {
+    return;
+  }
+
+  const columnsPerRow = 9;
+  const valueGroups: string[] = [];
+  const args: unknown[] = [];
+  let paramIndex = 1;
+
+  for (const row of rows) {
+    const placeholders = Array.from(
+      { length: columnsPerRow },
+      () => `$${paramIndex++}`,
+    );
+
+    valueGroups.push(`(${placeholders.join(', ')})`);
+    args.push(
+      row.id,
+      row.name,
+      row.status,
+      row.attempt,
+      row.executedByVersion,
+      row.errorMessage,
+      row.isInitial,
+      row.workspaceId,
+      row.createdAt,
+    );
+  }
+
+  await dataSource.query(
+    `INSERT INTO core."upgradeMigration"
+       (id, name, status, attempt, "executedByVersion", "errorMessage", "isInitial", "workspaceId", "createdAt")
+     VALUES ${valueGroups.join(', ')}`,
+    args,
+  );
 };
 
 export type ExecutedMigrationRecord = {

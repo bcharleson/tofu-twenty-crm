@@ -6,8 +6,9 @@ import * as fs from 'fs/promises';
 import { FileFolder } from 'twenty-shared/types';
 import { Repository } from 'typeorm';
 
+import { type ObjectFieldIndexFlatEntityMaps } from 'src/engine/metadata-modules/flat-entity/types/object-field-index-flat-entity-maps.type';
 import { ApplicationEntity } from 'src/engine/core-modules/application/application.entity';
-import { FileStorageService } from 'src/engine/core-modules/file-storage/file-storage.service';
+import { FileStorageService } from 'src/engine/core-modules/file-storage/services/file-storage.service';
 import {
   FileStorageException,
   FileStorageExceptionCode,
@@ -65,15 +66,18 @@ export class SdkClientArchiveService {
     workspaceId,
     applicationId,
     applicationUniversalIdentifier,
+    flatEntityMapsOverride,
   }: {
     workspaceId: string;
     applicationId: string;
     applicationUniversalIdentifier: string;
+    flatEntityMapsOverride?: ObjectFieldIndexFlatEntityMaps;
   }): Promise<Buffer> {
     return this.downloadArchiveBufferOrGenerate({
       workspaceId,
       applicationId,
       applicationUniversalIdentifier,
+      flatEntityMapsOverride,
     });
   }
 
@@ -134,10 +138,12 @@ export class SdkClientArchiveService {
     workspaceId,
     applicationId,
     applicationUniversalIdentifier,
+    flatEntityMapsOverride,
   }: {
     workspaceId: string;
     applicationId: string;
     applicationUniversalIdentifier: string;
+    flatEntityMapsOverride?: ObjectFieldIndexFlatEntityMaps;
   }): Promise<Buffer> {
     try {
       const stream = await this.fileStorageService.readFile({
@@ -165,6 +171,8 @@ export class SdkClientArchiveService {
       workspaceId,
       applicationId,
       applicationUniversalIdentifier,
+      trigger: 'missing-archive',
+      flatEntityMapsOverride,
     });
   }
 }

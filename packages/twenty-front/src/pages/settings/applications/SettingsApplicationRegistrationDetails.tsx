@@ -1,4 +1,6 @@
+import { useRefetchOnApplicationRegistrationChange } from '@/applications/hooks/useRefetchOnApplicationRegistrationChange';
 import { SettingsPageLayout } from '@/settings/components/layout/SettingsPageLayout';
+import { SettingsTabBar } from '@/settings/components/layout/SettingsTabBar';
 import { useQuery } from '@apollo/client/react';
 import { useParams } from 'react-router-dom';
 import { SettingsPath } from 'twenty-shared/types';
@@ -6,7 +8,6 @@ import { getSettingsPath, isDefined } from 'twenty-shared/utils';
 import { FindOneApplicationRegistrationDocument } from '~/generated-metadata/graphql';
 import { useLingui } from '@lingui/react/macro';
 import { Avatar, Tag } from 'twenty-ui/data-display';
-import { TabList } from '@/ui/layout/tab-list/components/TabList';
 import { SettingsPageContainer } from '@/settings/components/SettingsPageContainer';
 import {
   IconInfoCircle,
@@ -21,17 +22,9 @@ import { SettingsApplicationRegistrationGeneralTab } from '~/pages/settings/appl
 import { useAtomComponentStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomComponentStateValue';
 import { activeTabIdComponentState } from '@/ui/layout/tab-list/states/activeTabIdComponentState';
 import { getAbsoluteImageUrl } from '~/utils/image/getAbsoluteImageUrl';
-import { styled } from '@linaria/react';
-import { themeCssVariables } from 'twenty-ui/theme-constants';
 
 const REGISTRATION_DETAIL_TAB_LIST_ID =
   'application-registration-detail-tab-list';
-
-const StyledTitleContainer = styled.div`
-  align-items: center;
-  display: flex;
-  gap: ${themeCssVariables.spacing[2]};
-`;
 
 export const SettingsApplicationRegistrationDetails = () => {
   const { t } = useLingui();
@@ -45,9 +38,17 @@ export const SettingsApplicationRegistrationDetails = () => {
     applicationRegistrationId: string;
   }>();
 
-  const { data, loading } = useQuery(FindOneApplicationRegistrationDocument, {
-    variables: { id: applicationRegistrationId },
-    skip: !applicationRegistrationId,
+  const { data, loading, refetch } = useQuery(
+    FindOneApplicationRegistrationDocument,
+    {
+      variables: { id: applicationRegistrationId },
+      skip: !applicationRegistrationId,
+    },
+  );
+
+  useRefetchOnApplicationRegistrationChange({
+    applicationRegistrationId,
+    refetch,
   });
 
   const registration = data?.findOneApplicationRegistration;
@@ -95,17 +96,15 @@ export const SettingsApplicationRegistrationDetails = () => {
 
   return (
     <SettingsPageLayout
-      title={
-        <StyledTitleContainer>
-          <Avatar
-            type="app"
-            size="md"
-            avatarUrl={getAbsoluteImageUrl(registration.logoUrl ?? undefined)}
-            placeholder={registration.name}
-            placeholderColorSeed={registration.name}
-          />
-          {registration.name}
-        </StyledTitleContainer>
+      title={registration.name}
+      icon={
+        <Avatar
+          type="app"
+          size="md"
+          avatarUrl={getAbsoluteImageUrl(registration.logoUrl ?? undefined)}
+          placeholder={registration.name}
+          placeholderColorSeed={registration.name}
+        />
       }
       tag={<Tag text={t`Owner`} color={'gray'} />}
       links={[
@@ -124,14 +123,14 @@ export const SettingsApplicationRegistrationDetails = () => {
         },
         { children: registration.name },
       ]}
-    >
-      <SettingsPageContainer>
-        <TabList
+      secondaryBar={
+        <SettingsTabBar
           tabs={tabs}
           componentInstanceId={REGISTRATION_DETAIL_TAB_LIST_ID}
         />
-        {renderActiveTabContent()}
-      </SettingsPageContainer>
+      }
+    >
+      <SettingsPageContainer>{renderActiveTabContent()}</SettingsPageContainer>
     </SettingsPageLayout>
   );
 };

@@ -14,14 +14,14 @@ A Twenty app depends on two SDK packages:
 
 | Package | Purpose | Used in |
 | --- | --- | --- |
-| `twenty-sdk` | Define app entities and access front component runtime APIs | Entity definitions (`twenty-sdk/define`), front component hooks and host APIs (`twenty-sdk/front-component`), Twenty UI components (`twenty-sdk/ui`) |
+| `twenty-sdk` | Define app entities and access front component runtime APIs | Entity definitions (`twenty-sdk/define`), front component hooks and host APIs (`twenty-sdk/front-component`) |
 | `twenty-client-sdk` | Access workspace data from front components | Core object queries (`twenty-client-sdk/core`), metadata queries (`twenty-client-sdk/metadata`) |
 
 `twenty-sdk/define` provides the registration functions: `defineApplication`, `defineObject`, `defineField`, `defineView`, `definePageLayout`, `defineFrontComponent`, `defineNavigationMenuItem`, `defineLogicFunction`, `defineRole`, and others. Every app entity is declared through one of these functions.
 
 `twenty-sdk/front-component` provides runtime APIs available inside front components: `navigate`, `enqueueSnackbar`, `openSidePanelPage`, `useSelectedRecordIds`, `getApplicationVariable`, and others.
 
-`twenty-sdk/ui` re-exports Twenty UI components (`Button`, `Chip`, `Tag`, `Status`, `H2Title`, `ThemeProvider`, icons, `themeCssVariables`). Always import from `twenty-sdk/ui`, not from `twenty-ui` directly, so build aliases and runtime packaging stay aligned.
+Twenty UI components (`Button`, `Chip`, `Tag`, `Status`, `H2Title`, `ThemeProvider`, icons, `themeCssVariables`) live in the `twenty-ui` package. Install `twenty-ui@1.0.0-alpha.1` from npm and import from its subpaths (`twenty-ui/input`, `twenty-ui/data-display`, `twenty-ui/icon`, `twenty-ui/typography`, `twenty-ui/theme-constants`, and others).
 
 `twenty-client-sdk/core` provides `CoreApiClient` for querying and mutating workspace records (companies, people, custom objects). `twenty-client-sdk/metadata` provides access to workspace metadata (object definitions, field definitions).
 
@@ -51,11 +51,11 @@ The development loop is:
 create → develop → sync → validate → repeat
 ```
 
-1. **Create**: `npx create-twenty-app@latest <app-name>` generates the project, installs dependencies, starts a local Twenty server, and runs an initial sync. The scaffolder handles everything in one command — do not run `yarn twenty dev --once` after scaffolding because the sync already happened.
+1. **Create**: `npx create-twenty-app@latest <app-name>` generates the project, installs dependencies, starts a local Twenty server, and runs an initial sync. The scaffolder handles everything in one command — do not run `yarn twenty apply` after scaffolding because the sync already happened.
 
 2. **Develop**: Add or modify entities in `src/`. Objects go in `src/objects/`, front components in `src/front-components/`, logic functions in `src/logic-functions/`, page layouts in `src/page-layouts/`, and so on. Each entity file exports a `define*` call.
 
-3. **Sync**: `yarn twenty dev --once` builds, deploys, and installs the app on the active remote in one step. The Twenty instance updates its schema, registers new objects and fields, mounts front components, and activates logic functions. This is the primary way to get changes onto a Twenty instance during development. Sync after every meaningful change.
+3. **Sync**: `yarn twenty apply` builds, deploys, and installs the app on the active remote in one step. The Twenty instance updates its schema, registers new objects and fields, mounts front components, and activates logic functions. This is the primary way to get changes onto a Twenty instance during development. Sync after every meaningful change.
 
 4. **Validate**: `yarn twenty dev:typecheck` checks generated types. `yarn lint` checks local lint rules. Open the workspace in a browser to verify front components render and logic functions execute.
 
@@ -75,7 +75,7 @@ Front components do not run as a separate frontend application. The Twenty works
 This means:
 - Front components cannot access `document` or `window` globals directly.
 - They cannot use React portals or third-party libraries that manipulate the DOM outside their tree.
-- They import UI primitives from `twenty-sdk/ui`, not from `twenty-ui` or external component libraries.
+- They import UI primitives from `twenty-ui` (installed from npm), not from external component libraries.
 - They fetch workspace data through `twenty-client-sdk/core`, not through direct API calls.
 
 ## App File Structure
@@ -106,5 +106,5 @@ my-app/
 
 - **Universal identifiers**: Stable UUIDs assigned to every entity. They survive renames, version bumps, and resyncs. Never change a universal identifier after first sync.
 - **Remotes**: Named connections to Twenty instances. Stored in `~/.twenty/config.json`. Switch with `yarn twenty remote:use <name>`.
-- **Sync**: `yarn twenty dev --once` builds, deploys, and installs the app on the active remote in one step. This is the standard way to get code changes onto a Twenty instance.
+- **Sync**: `yarn twenty apply` builds, deploys, and installs the app on the active remote in one step. This is the standard way to get code changes onto a Twenty instance.
 - **Publish**: `yarn twenty app:publish` packages the app for distribution to other instances or the marketplace. Requires a strictly higher semver version than the previously published version.

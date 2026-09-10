@@ -1,6 +1,6 @@
+import { FieldMetadataType } from '@/types/FieldMetadataType';
 import { isDefined } from '@/utils';
 import { isObject } from 'class-validator';
-import { FieldMetadataType } from '@/types/FieldMetadataType';
 
 import { CAPTURE_ALL_VARIABLE_TAG_INNER_REGEX } from '../../constants/CaptureAllVariableTagInnerRegex';
 import { parseVariablePath } from '../../utils/variable-path.util';
@@ -16,6 +16,7 @@ import {
   type RecordOutputSchemaV2,
   type VariableSearchResult,
 } from '../types/output-schema.type';
+import { isFlattenedArrayOutputSchema } from './flattened-array-output-schema';
 
 const EMPTY_RESULT: VariableSearchResult = {
   variableLabel: undefined,
@@ -50,8 +51,6 @@ const stripBrackets = (rawVariableName: string): string =>
     CAPTURE_ALL_VARIABLE_TAG_INNER_REGEX,
     (_, variableName) => variableName,
   );
-
-// Record output schema navigation
 
 const getFieldFromSchema = (
   fieldKey: string,
@@ -176,8 +175,6 @@ export const searchRecordOutputSchema = ({
   );
 };
 
-// Base output schema navigation
-
 const navigateBaseToTargetField = (
   startingSchema: BaseOutputSchemaV2,
   pathSegments: string[],
@@ -239,8 +236,6 @@ const searchBaseOutputSchema = ({
     variableType: targetField.type,
   };
 };
-
-// Per-schema-type search functions
 
 const searchThroughRecordOutputSchema = ({
   stepName,
@@ -490,6 +485,19 @@ const searchThroughCodeOutputSchema = ({
     return EMPTY_RESULT;
   }
 
+  const parts = parseVariablePath(stripBrackets(rawVariableName));
+
+  if (
+    parts.length === 1 &&
+    isFlattenedArrayOutputSchema(codeOutputSchema as BaseOutputSchemaV2)
+  ) {
+    return {
+      variableLabel: stepName,
+      variablePathLabel: stepName,
+      variableType: FieldMetadataType.ARRAY,
+    };
+  }
+
   return searchThroughBaseOutputSchema({
     stepName,
     baseOutputSchema: codeOutputSchema as BaseOutputSchemaV2,
@@ -648,8 +656,6 @@ const searchThroughManualTriggerOutputSchema = ({
 
   return EMPTY_RESULT;
 };
-
-// Main dispatcher
 
 export const searchVariableInOutputSchema = ({
   schema,

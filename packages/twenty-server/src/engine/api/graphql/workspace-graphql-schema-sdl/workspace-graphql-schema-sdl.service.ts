@@ -5,6 +5,8 @@ import { printSchema } from 'graphql';
 import { isDefined } from 'twenty-shared/utils';
 
 import { ScalarsExplorerService } from 'src/engine/api/graphql/services/scalars-explorer.service';
+import { SCHEMA_SDL_CACHE_DEPENDENCIES } from 'src/engine/api/graphql/workspace-graphql-schema-sdl/constants/schema-sdl-cache-dependencies.constant';
+import { type ObjectFieldIndexFlatEntityMaps } from 'src/engine/metadata-modules/flat-entity/types/object-field-index-flat-entity-maps.type';
 import { WorkspaceGraphQLSchemaGenerator } from 'src/engine/api/graphql/workspace-schema-builder/workspace-graphql-schema.factory';
 import { FlatWorkspace } from 'src/engine/core-modules/workspace/types/flat-workspace.type';
 import {
@@ -18,6 +20,7 @@ import { type FlatFieldMetadata } from 'src/engine/metadata-modules/flat-field-m
 import { type FlatIndexMetadata } from 'src/engine/metadata-modules/flat-index-metadata/types/flat-index-metadata.type';
 import { type FlatObjectMetadata } from 'src/engine/metadata-modules/flat-object-metadata/types/flat-object-metadata.type';
 import { WorkspaceCacheStorageService } from 'src/engine/workspace-cache-storage/workspace-cache-storage.service';
+import { combineCacheHashes } from 'src/engine/workspace-cache/utils/combine-cache-hashes.util';
 import { TWENTY_STANDARD_APPLICATION } from 'src/engine/workspace-manager/twenty-standard-application/constants/twenty-standard-applications';
 
 export type WorkspaceGraphqlSchemaSDLResult = {
@@ -25,6 +28,7 @@ export type WorkspaceGraphqlSchemaSDLResult = {
   usedScalarNames: string[];
   flatObjectMetadataMaps: FlatEntityMaps<FlatObjectMetadata>;
   flatFieldMetadataMaps: FlatEntityMaps<FlatFieldMetadata>;
+  flatIndexMaps: FlatEntityMaps<FlatIndexMetadata>;
 };
 
 @Injectable()
@@ -39,27 +43,35 @@ export class WorkspaceGraphqlSchemaSDLService {
   async getOrComputeSchemaSDL(
     workspace: FlatWorkspace,
     applicationId?: string,
+    flatEntityMapsOverride?: ObjectFieldIndexFlatEntityMaps,
   ): Promise<WorkspaceGraphqlSchemaSDLResult | null> {
     if (!isNonEmptyString(workspace.databaseSchema)) {
       return null;
     }
 
-    const {
-      flatObjectMetadataMaps: allFlatObjectMetadataMaps,
-      flatFieldMetadataMaps: allFlatFieldMetadataMaps,
-      flatIndexMaps: allFlatIndexMaps,
-      flatApplicationMaps,
-    } = await this.workspaceManyOrAllFlatEntityMapsCacheService.getOrRecomputeManyOrAllFlatEntityMaps(
-      {
-        workspaceId: workspace.id,
-        flatMapsKeys: [
-          'flatObjectMetadataMaps',
-          'flatFieldMetadataMaps',
-          'flatIndexMaps',
-          'flatApplicationMaps',
-        ],
-      },
-    );
+    const shouldUseStoredSdl = !isDefined(flatEntityMapsOverride);
+
+    const { data, hashes } =
+      await this.workspaceManyOrAllFlatEntityMapsCacheService.getOrRecomputeManyOrAllFlatEntityMapsWithHashes(
+        {
+          workspaceId: workspace.id,
+          flatMapsKeys: shouldUseStoredSdl
+            ? [...SCHEMA_SDL_CACHE_DEPENDENCIES]
+            : isDefined(flatEntityMapsOverride?.flatIndexMaps)
+              ? ['flatApplicationMaps']
+              : ['flatApplicationMaps', 'flatIndexMaps'],
+        },
+      );
+
+    const { flatApplicationMaps } = data;
+    const allFlatObjectMetadataMaps =
+      flatEntityMapsOverride?.flatObjectMetadataMaps ??
+      data.flatObjectMetadataMaps;
+    const allFlatFieldMetadataMaps =
+      flatEntityMapsOverride?.flatFieldMetadataMaps ??
+      data.flatFieldMetadataMaps;
+    const allFlatIndexMaps =
+      flatEntityMapsOverride?.flatIndexMaps ?? data.flatIndexMaps;
 
     if (!isDefined(allFlatObjectMetadataMaps)) {
       throw new FlatEntityMapsException(
@@ -112,30 +124,24 @@ export class WorkspaceGraphqlSchemaSDLService {
       }
     }
 
-    let metadataVersion =
-      await this.workspaceCacheStorageService.getMetadataVersion(workspace.id);
+    const metadataCacheHash = shouldUseStoredSdl
+      ? combineCacheHashes(hashes, SCHEMA_SDL_CACHE_DEPENDENCIES)
+      : undefined;
 
-    if (!isDefined(metadataVersion)) {
-      metadataVersion = isDefined(workspace.metadataVersion)
-        ? workspace.metadataVersion
-        : 0;
-      await this.workspaceCacheStorageService.setMetadataVersion(
-        workspace.id,
-        metadataVersion,
-      );
-    }
-
-    let sdl = await this.workspaceCacheStorageService.getGraphQLTypeDefs(
-      workspace.id,
-      metadataVersion,
-      applicationId,
-    );
-    let usedScalarNames =
-      await this.workspaceCacheStorageService.getGraphQLUsedScalarNames(
-        workspace.id,
-        metadataVersion,
-        applicationId,
-      );
+    let sdl = isDefined(metadataCacheHash)
+      ? await this.workspaceCacheStorageService.getGraphQLTypeDefs(
+          workspace.id,
+          metadataCacheHash,
+          applicationId,
+        )
+      : undefined;
+    let usedScalarNames = isDefined(metadataCacheHash)
+      ? await this.workspaceCacheStorageService.getGraphQLUsedScalarNames(
+          workspace.id,
+          metadataCacheHash,
+          applicationId,
+        )
+      : undefined;
 
     if (!sdl || !usedScalarNames) {
       const autoGeneratedSchema =
@@ -149,18 +155,20 @@ export class WorkspaceGraphqlSchemaSDLService {
         this.scalarsExplorerService.getUsedScalarNames(autoGeneratedSchema);
       sdl = printSchema(autoGeneratedSchema);
 
-      await this.workspaceCacheStorageService.setGraphQLTypeDefs(
-        workspace.id,
-        metadataVersion,
-        sdl,
-        applicationId,
-      );
-      await this.workspaceCacheStorageService.setGraphQLUsedScalarNames(
-        workspace.id,
-        metadataVersion,
-        usedScalarNames,
-        applicationId,
-      );
+      if (isDefined(metadataCacheHash)) {
+        await this.workspaceCacheStorageService.setGraphQLTypeDefs(
+          workspace.id,
+          metadataCacheHash,
+          sdl,
+          applicationId,
+        );
+        await this.workspaceCacheStorageService.setGraphQLUsedScalarNames(
+          workspace.id,
+          metadataCacheHash,
+          usedScalarNames,
+          applicationId,
+        );
+      }
     }
 
     return {
@@ -168,6 +176,7 @@ export class WorkspaceGraphqlSchemaSDLService {
       usedScalarNames,
       flatObjectMetadataMaps,
       flatFieldMetadataMaps,
+      flatIndexMaps,
     };
   }
 

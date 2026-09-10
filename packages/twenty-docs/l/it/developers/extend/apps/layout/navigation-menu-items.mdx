@@ -35,10 +35,12 @@ export default defineNavigationMenuItem({
 
 * `position` controlla l’ordinamento nella barra laterale.
 
+* L'enum contiene anche `NavigationMenuItemType.RECORD`, utilizzato internamente per i preferiti impostati dall'utente sui record — non è utilizzabile dal manifest di un'app (non esiste alcun campo per fare riferimento a un record).
+
 * `icon` e `color` sono opzionali e personalizzano l’aspetto della voce.
 
 * `folderUniversalIdentifier` è inoltre disponibile su qualsiasi elemento per annidarlo all’interno di un genitore di tipo `FOLDER`.
 
 <Note>
-**Problema comune:** creare un oggetto senza una vista associata e una voce del menu di navigazione rende quell’oggetto invisibile per gli utenti. A meno che non si tratti di un oggetto tecnico/interno, ogni oggetto personalizzato dovrebbe avere una vista predefinita *e* una voce nella barra laterale che punti ad essa.
+**Problema comune:** creare un oggetto senza una voce del menu di navigazione associata rende quell’oggetto irraggiungibile dalla barra laterale. A meno che non si tratti di un oggetto tecnico/interno, ogni oggetto personalizzato dovrebbe avere una voce nella barra laterale che punti ad esso.
 </Note>

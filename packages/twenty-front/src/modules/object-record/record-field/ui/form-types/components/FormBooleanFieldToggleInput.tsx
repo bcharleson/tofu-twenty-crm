@@ -1,11 +1,9 @@
-import { FormFieldInputContainer } from '@/object-record/record-field/ui/form-types/components/FormFieldInputContainer';
+import { FormFieldInputContainer } from '@/ui/input/components/FormFieldInputContainer';
 import { FormFieldInputInnerContainer } from '@/object-record/record-field/ui/form-types/components/FormFieldInputInnerContainer';
 import { FormFieldInputRowContainer } from '@/object-record/record-field/ui/form-types/components/FormFieldInputRowContainer';
-import { InputHint } from '@/ui/input/components/InputHint';
-import { InputLabel } from '@/ui/input/components/InputLabel';
+import { Field, Toggle } from 'twenty-ui/input';
 import { styled } from '@linaria/react';
 import { useId } from 'react';
-import { Toggle } from 'twenty-ui/input';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
 
 type FormBooleanFieldToggleInputProps = {
@@ -31,10 +29,10 @@ const StyledDescription = styled.span`
 const StyledToggleContainer = styled.div`
   background-color: ${themeCssVariables.background.transparent.lighter};
   border-bottom: 1px solid ${themeCssVariables.border.color.medium};
-  border-bottom-right-radius: ${themeCssVariables.border.radius.sm};
+  border-bottom-right-radius: ${themeCssVariables.border.radius.md};
   border-right: 1px solid ${themeCssVariables.border.color.medium};
   border-top: 1px solid ${themeCssVariables.border.color.medium};
-  border-top-right-radius: ${themeCssVariables.border.radius.sm};
+  border-top-right-radius: ${themeCssVariables.border.radius.md};
   display: flex;
   padding-bottom: ${themeCssVariables.spacing[2]};
   padding-right: ${themeCssVariables.spacing[2]};
@@ -53,7 +51,7 @@ export const FormBooleanFieldToggleInput = ({
 
   return (
     <FormFieldInputContainer>
-      {label ? <InputLabel>{label}</InputLabel> : null}
+      {label ? <Field.Label>{label}</Field.Label> : null}
 
       <FormFieldInputRowContainer>
         <FormFieldInputInnerContainer
@@ -74,7 +72,7 @@ export const FormBooleanFieldToggleInput = ({
         </StyledToggleContainer>
       </FormFieldInputRowContainer>
 
-      {hint && <InputHint>{hint}</InputHint>}
+      {hint && <Field.Description>{hint}</Field.Description>}
     </FormFieldInputContainer>
   );
 };

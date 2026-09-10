@@ -21,7 +21,7 @@ import { SettingsPageContainer } from '@/settings/components/SettingsPageContain
 import { SettingsSkeletonLoader } from '@/settings/components/SettingsSkeletonLoader';
 import { SettingsTableCard } from '@/settings/components/SettingsTableCard';
 import { SettingsPageLayout } from '@/settings/components/layout/SettingsPageLayout';
-import { TabList } from '@/ui/layout/tab-list/components/TabList';
+import { SettingsTabBar } from '@/settings/components/layout/SettingsTabBar';
 import { activeTabIdComponentState } from '@/ui/layout/tab-list/states/activeTabIdComponentState';
 import { DEFAULT_WORKSPACE_LOGO } from '@/ui/navigation/navigation-drawer/constants/DefaultWorkspaceLogo';
 import { useAtomComponentStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomComponentStateValue';
@@ -34,6 +34,7 @@ import {
   IconMail,
   IconUser,
 } from 'twenty-ui/icon';
+import { Avatar } from 'twenty-ui/data-display';
 import { H2Title } from 'twenty-ui/typography';
 import { Button } from 'twenty-ui/input';
 import { Section } from 'twenty-ui/layout';
@@ -140,6 +141,15 @@ export const SettingsAdminUserDetail = () => {
 
   return (
     <SettingsPageLayout
+      title={displayName}
+      icon={
+        <Avatar
+          placeholder={displayName}
+          placeholderColorSeed={user?.id}
+          size="md"
+          type="rounded"
+        />
+      }
       links={[
         {
           children: t`Other`,
@@ -153,6 +163,15 @@ export const SettingsAdminUserDetail = () => {
           children: displayName,
         },
       ]}
+      secondaryBar={
+        tabs.length > 0 ? (
+          <SettingsTabBar
+            tabs={tabs}
+            behaveAsLinks={false}
+            componentInstanceId={SETTINGS_ADMIN_USER_LOOKUP_WORKSPACE_TABS_ID}
+          />
+        ) : undefined
+      }
     >
       <SettingsPageContainer>
         {userLookupResult && (
@@ -169,13 +188,6 @@ export const SettingsAdminUserDetail = () => {
               <H2Title
                 title={t`Workspaces`}
                 description={t`All workspaces this user is a member of`}
-              />
-              <TabList
-                tabs={tabs}
-                behaveAsLinks={false}
-                componentInstanceId={
-                  SETTINGS_ADMIN_USER_LOOKUP_WORKSPACE_TABS_ID
-                }
               />
               <SettingsAdminWorkspaceContent
                 activeWorkspace={activeWorkspace}

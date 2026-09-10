@@ -44,6 +44,7 @@ export type {
 export { ColorSchemeCard } from './ColorSchemeCard/ColorSchemeCard';
 export type { ColorSchemePickerProps } from './ColorSchemePicker/ColorSchemePicker';
 export { ColorSchemePicker } from './ColorSchemePicker/ColorSchemePicker';
+export { Field } from './Field/Field';
 export type {
   FloatingButtonSize,
   FloatingButtonPosition,
@@ -70,7 +71,11 @@ export type {
 export { IconButton } from './IconButton/IconButton';
 export type { IconButtonGroupProps } from './IconButtonGroup/IconButtonGroup';
 export { IconButtonGroup } from './IconButtonGroup/IconButtonGroup';
+export type { IconButtonWithTooltipProps } from './IconButtonWithTooltip/IconButtonWithTooltip';
+export { IconButtonWithTooltip } from './IconButtonWithTooltip/IconButtonWithTooltip';
 export { IconListViewGrip } from './IconListViewGrip/IconListViewGrip';
+export { InputHint } from './InputHint/InputHint';
+export { InputLabel } from './InputLabel/InputLabel';
 export type { InsideButtonProps } from './InsideButton/InsideButton';
 export { InsideButton } from './InsideButton/InsideButton';
 export type {
@@ -95,6 +100,13 @@ export type { RoundedIconButtonSize } from './RoundedIconButton/RoundedIconButto
 export { RoundedIconButton } from './RoundedIconButton/RoundedIconButton';
 export type { SearchInputProps } from './SearchInput/SearchInput';
 export { SearchInput } from './SearchInput/SearchInput';
+export type {
+  SegmentedControlOption,
+  SegmentedControlProps,
+} from './SegmentedControl/SegmentedControl';
+export { SegmentedControl } from './SegmentedControl/SegmentedControl';
+export type { SliderColor, SliderProps } from './Slider/Slider';
+export { Slider } from './Slider/Slider';
 export type { TabContentProps } from './TabButton/TabButton';
 export {
   StyledTabContainer,

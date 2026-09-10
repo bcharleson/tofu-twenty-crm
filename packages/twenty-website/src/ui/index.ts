@@ -16,6 +16,7 @@ export { Container } from './Container';
 export { ExternalArrow } from './ExternalArrow';
 export { ExternalLink } from './ExternalLink';
 export { CornerMarkers } from './CornerMarkers';
+export { EngagementBand } from './EngagementBand';
 export { Eyebrow, type EyebrowProps } from './Eyebrow';
 export { IconButton, type IconButtonProps } from './IconButton';
 export {
@@ -40,3 +41,11 @@ export { SectionStack } from './SectionStack';
 export { VerticalDivider } from './VerticalDivider';
 export { SectionShell, type SectionShellProps } from './SectionShell';
 export { Signoff, type SignoffProps } from './Signoff';
+export {
+  StepperProgressRail,
+  type StepperProgressRailProps,
+} from './StepperProgressRail';
+export {
+  StepperSwipeDeck,
+  type StepperSwipeDeckProps,
+} from './StepperSwipeDeck';

@@ -2,6 +2,7 @@ import { useParams } from 'react-router-dom';
 
 import { useMutation, useQuery } from '@apollo/client/react';
 import { t } from '@lingui/core/macro';
+import { isNonEmptyString } from '@sniptt/guards';
 import { SettingsPath } from 'twenty-shared/types';
 import { getSettingsPath, isDefined } from 'twenty-shared/utils';
 
@@ -22,13 +23,14 @@ import { SettingsPageContainer } from '@/settings/components/SettingsPageContain
 import { SettingsSkeletonLoader } from '@/settings/components/SettingsSkeletonLoader';
 import { useSnackBar } from '@/ui/feedback/snack-bar-manager/hooks/useSnackBar';
 import { SettingsPageLayout } from '@/settings/components/layout/SettingsPageLayout';
-import { TabList } from '@/ui/layout/tab-list/components/TabList';
+import { SettingsTabBar } from '@/settings/components/layout/SettingsTabBar';
 import { activeTabIdComponentState } from '@/ui/layout/tab-list/states/activeTabIdComponentState';
 import { Table } from '@/ui/layout/table/components/Table';
 import { TableBody } from '@/ui/layout/table/components/TableBody';
 import { TableCell } from '@/ui/layout/table/components/TableCell';
 import { TableHeader } from '@/ui/layout/table/components/TableHeader';
 import { TableRow } from '@/ui/layout/table/components/TableRow';
+import { DEFAULT_WORKSPACE_LOGO } from '@/ui/navigation/navigation-drawer/constants/DefaultWorkspaceLogo';
 import { useAtomComponentStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomComponentStateValue';
 import { useAtomStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomStateValue';
 import { Avatar } from 'twenty-ui/data-display';
@@ -196,6 +198,9 @@ export const SettingsAdminWorkspaceDetail = () => {
   ];
 
   const workspaceName = workspace?.name || workspaceId || '';
+  const workspaceLogo = isNonEmptyString(workspace?.logo)
+    ? workspace.logo
+    : DEFAULT_WORKSPACE_LOGO;
 
   if (isLoadingWorkspace) {
     return <SettingsSkeletonLoader />;
@@ -203,6 +208,15 @@ export const SettingsAdminWorkspaceDetail = () => {
 
   return (
     <SettingsPageLayout
+      title={workspaceName}
+      icon={
+        <Avatar
+          avatarUrl={getAbsoluteImageUrl(workspaceLogo)}
+          placeholder={workspaceName}
+          placeholderColorSeed={workspace?.id}
+          size="md"
+        />
+      }
       links={[
         {
           children: t`Other`,
@@ -216,14 +230,15 @@ export const SettingsAdminWorkspaceDetail = () => {
           children: workspaceName,
         },
       ]}
-    >
-      <SettingsPageContainer>
-        <TabList
+      secondaryBar={
+        <SettingsTabBar
           tabs={tabs}
           behaveAsLinks={false}
           componentInstanceId={WORKSPACE_DETAIL_TABS_ID}
         />
-
+      }
+    >
+      <SettingsPageContainer>
         {effectiveTabId === WORKSPACE_DETAIL_TAB_IDS.INFO && workspace && (
           <SettingsAdminWorkspaceContent
             activeWorkspace={workspace}
@@ -401,9 +416,7 @@ export const SettingsAdminWorkspaceDetail = () => {
                     <TableCell color={themeCssVariables.font.color.primary}>
                       {thread.title || t`Untitled`}
                     </TableCell>
-                    <TableCell align="right">
-                      {thread.conversationSize}
-                    </TableCell>
+                    <TableCell align="right">{thread.messageCount}</TableCell>
                     <TableCell align="right">
                       {new Date(thread.updatedAt).toLocaleDateString()}
                     </TableCell>

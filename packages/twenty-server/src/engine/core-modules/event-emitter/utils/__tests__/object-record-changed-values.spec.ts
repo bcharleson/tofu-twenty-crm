@@ -1,4 +1,10 @@
-import { FieldMetadataType, RelationType } from 'twenty-shared/types';
+import {
+  FieldMetadataType,
+  MetadataReadability,
+  MetadataWritability,
+  ObjectOpenRecordIn,
+  RelationType,
+} from 'twenty-shared/types';
 
 import {
   computeUpdatedFieldsFromDiff,
@@ -26,19 +32,24 @@ const mockObjectMetadata: FlatObjectMetadata = {
   isSearchable: true,
   indexMetadataIds: [],
   searchFieldMetadataIds: [],
+  commandMenuItemIds: [],
   objectPermissionIds: [],
   fieldPermissionIds: [],
   fieldIds: [],
   viewIds: [],
+  pageLayoutIds: [],
   applicationId: 'test-application-id',
   isLabelSyncedWithName: false,
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
   shortcut: null,
   description: null,
-  standardOverrides: null,
+  overrides: null,
   isUIEditable: true,
   isUICreatable: true,
+  writability: MetadataWritability.OPEN,
+  readability: MetadataReadability.OPEN,
+  openRecordIn: ObjectOpenRecordIn.USER_CHOICE,
   labelIdentifierFieldMetadataId: null,
   imageIdentifierFieldMetadataId: null,
   duplicateCriteria: null,
@@ -47,8 +58,10 @@ const mockObjectMetadata: FlatObjectMetadata = {
   objectPermissionUniversalIdentifiers: [],
   fieldPermissionUniversalIdentifiers: [],
   viewUniversalIdentifiers: [],
+  pageLayoutUniversalIdentifiers: [],
   indexMetadataUniversalIdentifiers: [],
   searchFieldMetadataUniversalIdentifiers: [],
+  commandMenuItemUniversalIdentifiers: [],
   labelIdentifierFieldMetadataUniversalIdentifier: null,
   imageIdentifierFieldMetadataUniversalIdentifier: null,
 };

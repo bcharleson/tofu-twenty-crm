@@ -16,6 +16,7 @@ export const OBJECT_METADATA_FRAGMENT = gql`
     isSystem
     isUIEditable
     isUICreatable
+    writability
     createdAt
     updatedAt
     labelIdentifierFieldMetadataId
@@ -24,7 +25,16 @@ export const OBJECT_METADATA_FRAGMENT = gql`
     shortcut
     isLabelSyncedWithName
     isSearchable
+    openRecordIn
     duplicateCriteria
+    searchFieldMetadataList {
+      id
+      fieldMetadataId
+      tsVectorFieldMetadataId
+      position
+      createdAt
+      updatedAt
+    }
     indexMetadataList {
       id
       createdAt
@@ -54,6 +64,7 @@ export const OBJECT_METADATA_FRAGMENT = gql`
       isActive
       isSystem
       isUIEditable
+      writability
       isNullable
       isUnique
       createdAt

@@ -1,8 +1,7 @@
 import { expect, test } from '@playwright/test';
-import * as fs from 'fs';
-import * as path from 'path';
 
 import { CARD_TEST_IDS } from '../src/components/card-test-ids';
+import { resolveE2eWorkspaceUrl } from './utils/resolve-e2e-workspace-url';
 
 // Seeded postcard record the preview should display.
 const RECORD_ID = process.env.E2E_POSTCARD_RECORD_ID;
@@ -15,28 +14,6 @@ const STATUS_BADGE_BACKGROUND: Record<string, string> = {
   SENT: 'rgb(232, 140, 48)',
   DELIVERED: 'rgb(76, 175, 80)',
   RETURNED: 'rgb(224, 82, 82)',
-};
-
-const WORKSPACE_ORIGIN_FILE = path.resolve(
-  __dirname,
-  '.auth',
-  'workspace-origin.txt',
-);
-
-const resolveWorkspaceUrl = (): string => {
-  const fromEnv = process.env.E2E_WORKSPACE_URL;
-  if (fromEnv) {
-    return fromEnv.replace(/\/$/, '');
-  }
-
-  try {
-    return fs
-      .readFileSync(WORKSPACE_ORIGIN_FILE, 'utf8')
-      .trim()
-      .replace(/\/$/, '');
-  } catch {
-    return 'http://app.localhost:3001';
-  }
 };
 
 // Error states rendered by card.front-component.tsx when it cannot authenticate
@@ -58,10 +35,46 @@ test.describe('Postcard card front component', () => {
     }
   });
 
+  // The front component renders in a separate iframe + Web Worker, so its
+  // failures never reach the assertion output. Surface browser console output,
+  // uncaught errors, failed requests, and 4xx/5xx responses (e.g. a presigned
+  // S3 403) in the test log so CI failures are diagnosable without the trace.
+  test.beforeEach(({ page }) => {
+    page.on('console', (message) => {
+      console.log(`[browser:${message.type()}] ${message.text()}`);
+    });
+
+    page.on('pageerror', (error) => {
+      console.log(`[pageerror] ${error.message}\n${error.stack ?? ''}`);
+    });
+
+    page.on('requestfailed', (request) => {
+      console.log(
+        `[requestfailed] ${request.method()} ${request.url()} — ${
+          request.failure()?.errorText ?? 'unknown error'
+        }`,
+      );
+    });
+
+    page.on('response', (response) => {
+      if (response.status() >= 400) {
+        console.log(
+          `[response ${response.status()}] ${response
+            .request()
+            .method()} ${response.url()}`,
+        );
+      }
+    });
+
+    page.on('worker', (worker) => {
+      console.log(`[worker started] ${worker.url()}`);
+    });
+  });
+
   test('renders the postcard name and status badge in the record preview', async ({
     page,
   }) => {
-    await page.goto(`${resolveWorkspaceUrl()}/object/postCard/${RECORD_ID}`);
+    await page.goto(`${resolveE2eWorkspaceUrl()}/object/postCard/${RECORD_ID}`);
 
     const card = page.getByTestId(CARD_TEST_IDS.root);
     await expect(card).toBeVisible();
@@ -125,5 +138,15 @@ test.describe('Postcard card front component', () => {
     for (const fallback of FALLBACK_TEXTS) {
       await expect(page.getByText(fallback, { exact: false })).toHaveCount(0);
     }
+
+    const sdkPanel = page.getByTestId(CARD_TEST_IDS.sdkPanel);
+    await expect(sdkPanel).toBeVisible();
+
+    await expect(page.getByTestId(CARD_TEST_IDS.sdkCore)).toHaveText('core: ok');
+    await expect(page.getByTestId(CARD_TEST_IDS.sdkMetadata)).toHaveText(
+      'metadata: ok',
+    );
+
+    await expect(page.getByTestId(CARD_TEST_IDS.sdkRest)).toHaveText('rest: ok');
   });
 });

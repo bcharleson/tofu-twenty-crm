@@ -1,4 +1,4 @@
-import { UseGuards, UseInterceptors } from '@nestjs/common';
+import { UseFilters, UseGuards, UseInterceptors } from '@nestjs/common';
 import {
   Args,
   Float,
@@ -14,7 +14,6 @@ import { isDefined } from 'twenty-shared/utils';
 
 import { MetadataResolver } from 'src/engine/api/graphql/graphql-config/decorators/metadata-resolver.decorator';
 import { UUIDScalarType } from 'src/engine/api/graphql/workspace-schema-builder/graphql-types/scalars';
-import { BillingUsageService } from 'src/engine/core-modules/billing/services/billing-usage.service';
 import { RedisClientService } from 'src/engine/core-modules/redis-client/redis-client.service';
 import { toDisplayCredits } from 'src/engine/core-modules/usage/utils/to-display-credits.util';
 import { type WorkspaceEntity } from 'src/engine/core-modules/workspace/workspace.entity';
@@ -24,6 +23,7 @@ import { SettingsPermissionGuard } from 'src/engine/guards/settings-permission.g
 import { WorkspaceAuthGuard } from 'src/engine/guards/workspace-auth.guard';
 import { AgentMessageDTO } from 'src/engine/metadata-modules/ai/ai-agent-execution/dtos/agent-message.dto';
 import { type BrowsingContextType } from 'src/engine/metadata-modules/ai/ai-agent/types/browsingContext.type';
+import { AgentChatQuestionAnswerInput } from 'src/engine/metadata-modules/ai/ai-chat/dtos/agent-chat-question-answer.input';
 import { AgentChatThreadDTO } from 'src/engine/metadata-modules/ai/ai-chat/dtos/agent-chat-thread.dto';
 import { FileAttachmentInput } from 'src/engine/metadata-modules/ai/ai-chat/dtos/file-attachment.input';
 import { AiSystemPromptPreviewDTO } from 'src/engine/metadata-modules/ai/ai-chat/dtos/ai-system-prompt-preview.dto';
@@ -35,16 +35,26 @@ import { AgentChatStreamingService } from 'src/engine/metadata-modules/ai/ai-cha
 import { AgentChatService } from 'src/engine/metadata-modules/ai/ai-chat/services/agent-chat.service';
 import { SystemPromptBuilderService } from 'src/engine/metadata-modules/ai/ai-chat/services/system-prompt-builder.service';
 import { getCancelChannel } from 'src/engine/metadata-modules/ai/ai-chat/utils/get-cancel-channel.util';
+import { tagAiChatStreamScope } from 'src/engine/metadata-modules/ai/ai-chat/utils/tag-ai-chat-stream-scope.util';
+import { UsageOperationType } from 'src/engine/core-modules/usage/enums/usage-operation-type.enum';
+import { AiBillingService } from 'src/engine/metadata-modules/ai/ai-billing/services/ai-billing.service';
 import { AiModelRegistryService } from 'src/engine/metadata-modules/ai/ai-models/services/ai-model-registry.service';
 import {
   AiException,
   AiExceptionCode,
 } from 'src/engine/metadata-modules/ai/ai.exception';
+import { BillingGraphqlApiExceptionFilter } from 'src/engine/core-modules/billing/filters/billing-graphql-api-exception.filter';
+import { UsageLimitGraphqlApiExceptionFilter } from 'src/engine/core-modules/usage-limit/filters/usage-limit-graphql-api-exception.filter';
 import { AiGraphqlApiExceptionInterceptor } from 'src/engine/metadata-modules/ai/interceptors/ai-graphql-api-exception.interceptor';
 import { InjectWorkspaceScopedRepository } from 'src/engine/twenty-orm/workspace-scoped-repository/inject-workspace-scoped-repository.decorator';
 import { WorkspaceScopedRepository } from 'src/engine/twenty-orm/workspace-scoped-repository/workspace-scoped-repository';
+
 @UseGuards(WorkspaceAuthGuard, SettingsPermissionGuard(PermissionFlagType.AI))
 @UseInterceptors(AiGraphqlApiExceptionInterceptor)
+@UseFilters(
+  UsageLimitGraphqlApiExceptionFilter,
+  BillingGraphqlApiExceptionFilter,
+)
 @MetadataResolver(() => AgentChatThreadDTO)
 export class AgentChatResolver {
   constructor(
@@ -52,7 +62,7 @@ export class AgentChatResolver {
     private readonly agentChatStreamingService: AgentChatStreamingService,
     private readonly eventPublisherService: AgentChatEventPublisherService,
     private readonly systemPromptBuilderService: SystemPromptBuilderService,
-    private readonly billingUsageService: BillingUsageService,
+    private readonly aiBillingService: AiBillingService,
     private readonly aiModelRegistryService: AiModelRegistryService,
     private readonly redisClientService: RedisClientService,
     @InjectWorkspaceScopedRepository(AgentChatThreadEntity)
@@ -102,13 +112,36 @@ export class AgentChatResolver {
     @AuthUserWorkspaceId() userWorkspaceId: string,
     @AuthWorkspace() { id: workspaceId }: WorkspaceEntity,
   ) {
-    await this.agentChatService.getThreadById({
+    const thread = await this.agentChatService.getThreadById({
       threadId,
       userWorkspaceId,
       workspaceId,
     });
 
-    return this.eventPublisherService.getAccumulatedChunks(threadId);
+    const interruptedError =
+      await this.agentChatStreamingService.reapDeadStream({
+        thread,
+        workspaceId,
+      });
+
+    if (interruptedError) {
+      thread.activeStreamId = null;
+      thread.lastStreamError = interruptedError;
+    }
+
+    const { chunks, maxSeq } =
+      await this.eventPublisherService.getAccumulatedChunks(threadId);
+
+    return {
+      chunks,
+      maxSeq,
+      error: thread.lastStreamError
+        ? {
+            code: thread.lastStreamError.code,
+            message: thread.lastStreamError.message,
+          }
+        : null,
+    };
   }
 
   @Mutation(() => AgentChatThreadDTO)
@@ -153,7 +186,11 @@ export class AgentChatResolver {
       workspace,
     );
 
-    await this.billingUsageService.hasAvailableCreditsOrThrow(workspace.id);
+    await this.aiBillingService.assertAiExecutionAllowed({
+      workspaceId: workspace.id,
+      operationType: UsageOperationType.AI_CHAT_TOKEN,
+      spenders: { userWorkspaceId },
+    });
 
     const thread = await this.threadRepository.findOne(workspace.id, {
       where: { id: threadId, userWorkspaceId },
@@ -175,6 +212,22 @@ export class AgentChatResolver {
     }
 
     if (isDefined(thread.activeStreamId)) {
+      const interruptedError =
+        await this.agentChatStreamingService.reapDeadStream({
+          thread,
+          workspaceId: workspace.id,
+        });
+
+      if (interruptedError) {
+        thread.activeStreamId = null;
+        thread.lastStreamError = interruptedError;
+      }
+    }
+
+    if (
+      isDefined(thread.activeStreamId) ||
+      isDefined(thread.pendingQuestionMessageId)
+    ) {
       const queuedMessage = await this.agentChatService.queueMessage({
         threadId,
         text,
@@ -204,11 +257,145 @@ export class AgentChatResolver {
       fileAttachments: fileAttachments ?? undefined,
     });
 
+    if (result.queued) {
+      await this.eventPublisherService.publish({
+        threadId,
+        workspaceId: workspace.id,
+        event: { type: 'queue-updated' },
+      });
+
+      return { messageId: result.messageId, queued: true };
+    }
+
+    tagAiChatStreamScope({
+      streamId: result.streamId,
+      turnId: result.turnId,
+      threadId,
+      workspaceId: workspace.id,
+    });
+
     return {
       messageId: result.messageId,
       queued: false,
       streamId: result.streamId,
     };
+  }
+
+  @Mutation(() => SendChatMessageResultDTO)
+  async retryChatMessage(
+    @Args('threadId', { type: () => UUIDScalarType }) threadId: string,
+    @Args('modelId', { type: () => String, nullable: true })
+    modelId: string | undefined,
+    @AuthUserWorkspaceId() userWorkspaceId: string,
+    @AuthWorkspace() workspace: WorkspaceEntity,
+  ): Promise<SendChatMessageResultDTO> {
+    if (this.aiModelRegistryService.getAvailableModels().length === 0) {
+      throw new AiException(
+        'No AI models are available. Configure at least one AI provider.',
+        AiExceptionCode.API_KEY_NOT_CONFIGURED,
+      );
+    }
+
+    this.aiModelRegistryService.validateModelAvailability(
+      modelId ?? workspace.smartModel,
+      workspace,
+    );
+
+    await this.aiBillingService.assertAiExecutionAllowed({
+      workspaceId: workspace.id,
+      operationType: UsageOperationType.AI_CHAT_TOKEN,
+      spenders: { userWorkspaceId },
+    });
+
+    const result = await this.agentChatStreamingService.retryLastFailedTurn({
+      threadId,
+      userWorkspaceId,
+      workspace,
+      modelId,
+    });
+
+    tagAiChatStreamScope({
+      streamId: result.streamId,
+      turnId: result.turnId,
+      threadId,
+      workspaceId: workspace.id,
+    });
+
+    return {
+      messageId: result.messageId,
+      queued: false,
+      streamId: result.streamId,
+    };
+  }
+
+  @Mutation(() => SendChatMessageResultDTO)
+  async answerAgentChatQuestion(
+    @Args('threadId', { type: () => UUIDScalarType }) threadId: string,
+    @Args('messageId', { type: () => UUIDScalarType }) messageId: string,
+    @Args('answers', { type: () => [AgentChatQuestionAnswerInput] })
+    answers: AgentChatQuestionAnswerInput[],
+    @Args('modelId', { type: () => String, nullable: true })
+    modelId: string | undefined,
+    @Args('fileAttachments', {
+      type: () => [FileAttachmentInput],
+      nullable: true,
+    })
+    fileAttachments: FileAttachmentInput[] | null,
+    @AuthUserWorkspaceId() userWorkspaceId: string,
+    @AuthWorkspace() workspace: WorkspaceEntity,
+  ): Promise<SendChatMessageResultDTO> {
+    if (this.aiModelRegistryService.getAvailableModels().length === 0) {
+      throw new AiException(
+        'No AI models are available. Configure at least one AI provider.',
+        AiExceptionCode.API_KEY_NOT_CONFIGURED,
+      );
+    }
+
+    const resolvedModelId = modelId ?? workspace.smartModel;
+
+    this.aiModelRegistryService.validateModelAvailability(
+      resolvedModelId,
+      workspace,
+    );
+
+    await this.aiBillingService.assertAiExecutionAllowed({
+      workspaceId: workspace.id,
+      operationType: UsageOperationType.AI_CHAT_TOKEN,
+      spenders: { userWorkspaceId },
+    });
+
+    const thread = await this.threadRepository.findOne(workspace.id, {
+      where: { id: threadId, userWorkspaceId },
+    });
+
+    if (!isDefined(thread)) {
+      throw new AiException(
+        'Thread not found',
+        AiExceptionCode.THREAD_NOT_FOUND,
+      );
+    }
+
+    const { streamId, turnId } =
+      await this.agentChatStreamingService.answerPendingQuestionAndResumeStream(
+        {
+          threadId,
+          messageId,
+          answers,
+          userWorkspaceId,
+          workspace,
+          modelId,
+          fileAttachments: fileAttachments ?? undefined,
+        },
+      );
+
+    tagAiChatStreamScope({
+      streamId,
+      turnId,
+      threadId,
+      workspaceId: workspace.id,
+    });
+
+    return { messageId, queued: false, streamId };
   }
 
   @Mutation(() => Boolean)
@@ -227,11 +414,14 @@ export class AgentChatResolver {
 
     const redis = this.redisClientService.getClient();
 
-    await redis.publish(getCancelChannel(threadId), 'cancel');
+    await redis.publish(
+      getCancelChannel(threadId, thread.activeStreamId),
+      'cancel',
+    );
 
     await this.threadRepository.update(
       workspaceId,
-      { id: threadId, userWorkspaceId },
+      { id: threadId, userWorkspaceId, activeStreamId: thread.activeStreamId },
       { activeStreamId: null },
     );
 
@@ -313,7 +503,10 @@ export class AgentChatResolver {
 
     const redis = this.redisClientService.getClient();
 
-    await redis.publish(getCancelChannel(threadId), 'cancel');
+    await redis.publish(
+      getCancelChannel(threadId, thread.activeStreamId),
+      'cancel',
+    );
   }
 
   @Mutation(() => Boolean)

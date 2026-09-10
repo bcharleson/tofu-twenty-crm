@@ -25,7 +25,7 @@ const StyledChip = styled.div<{ variant: SortOrFilterChipVariant }>`
           return themeCssVariables.accent.tertiary;
       }
     }};
-  border-radius: 4px;
+  border-radius: ${themeCssVariables.border.radius.smRound};
   box-sizing: border-box;
   color: ${({ variant }) => {
     switch (variant) {
@@ -37,6 +37,7 @@ const StyledChip = styled.div<{ variant: SortOrFilterChipVariant }>`
     }
   }};
   column-gap: ${themeCssVariables.spacing[1]};
+  corner-shape: round;
   cursor: pointer;
   display: flex;
   flex-direction: row;
@@ -61,6 +62,7 @@ const StyledDelete = styled.button<{ variant: SortOrFilterChipVariant }>`
   border: none;
   box-sizing: border-box;
   color: inherit;
+  corner-shape: round;
   cursor: pointer;
   display: flex;
   font-size: ${themeCssVariables.font.size.sm};
@@ -81,7 +83,7 @@ const StyledDelete = styled.button<{ variant: SortOrFilterChipVariant }>`
           return themeCssVariables.accent.secondary;
       }
     }};
-    border-radius: ${themeCssVariables.border.radius.sm};
+    border-radius: ${themeCssVariables.border.radius.smRound};
   }
 `;
 

@@ -5,6 +5,7 @@ import { type ReactNode } from 'react';
 
 import {
   type Application,
+  ApplicationState,
   FindOneApplicationDocument,
   UpdateOneApplicationVariableDocument,
 } from '~/generated-metadata/graphql';
@@ -31,12 +32,13 @@ const buildApplication = (variableValue: string): Application => ({
   id: APP_ID,
   name: 'Test App',
   description: null,
-  logo: null,
   version: '1.0.0',
   universalIdentifier: 'test-app',
+  state: ApplicationState.INSTALLED,
   applicationRegistrationId: null,
   applicationRegistration: null,
   canBeUninstalled: true,
+  autoUpgrade: false,
   defaultRoleId: null,
   settingsCustomTabFrontComponentId: null,
   availablePackages: {},
@@ -47,7 +49,10 @@ const buildApplication = (variableValue: string): Application => ({
       key: KEY,
       value: variableValue,
       description: '',
+      label: '',
       isSecret: false,
+      isDeprecated: false,
+      type: 'TEXT',
     },
   ],
   agents: [],
