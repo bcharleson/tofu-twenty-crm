@@ -105,6 +105,7 @@ These are intentional changes to Twenty core files. Check each during every upst
 | **White-label auth copy** | `SignInUp.tsx`, `FooterNote.tsx` | Generic welcome text; hide Twenty ToS/Privacy links on sign-in | May 26 2026 |
 | **White-label timeline** | `getTimelineActivityAuthorFullName.ts` | System events show "System" not "Twenty" | May 26 2026 |
 | **White-label invite email** | `workspace-invitation.service.ts`, `send-invite-link.email.tsx`, `twenty-emails/src/components/Logo.tsx`, `Footer.tsx` | From = `EMAIL_FROM_NAME`; no Twenty subject/footer/logo; drop "What is Twenty?" block | Jul 2026 |
+| **Hide Enterprise key upsell** | `useSettingsAdminTabs.ts`, `SettingsAdminTabContent.tsx`, `SettingsRoutes.tsx`, `SettingsEnterpriseFeatureGateCard.tsx` | Self-hosted fleet: no Admin Panel → Enterprise tab / Get Enterprise Key CTA. Do not unlock Twenty commercial modules. | Sep 2026 |
 
 ### How to re-apply after an upstream merge conflict
 
